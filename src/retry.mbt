@@ -5,20 +5,24 @@
 /// How much randomness goes into a delay.
 ///
 /// A retry with no jitter makes every client that failed together try again
-/// together, which is how one outage becomes a second one. The three named
-/// strategies are the ones AWS's "Exponential Backoff and Jitter" measures:
+/// together, which is how one outage becomes a second one. `Full`, `Equal` and
+/// `Decorrelated` are the strategies AWS's "Exponential Backoff and Jitter"
+/// measures; `Spread` is the randomisation factor of Google's client libraries and
+/// the one gRPC retries with:
 ///
 /// | | |
 /// |:--:|:--|
 /// | `Rigid` | the computed delay, unchanged. Reproducible, and it synchronises clients |
-/// | `Full` | uniform over `[0, cap]`. The one that spreads clients furthest, and what gRPC sleeps |
+/// | `Full` | uniform over `[0, cap]`. The one that spreads clients furthest |
 /// | `Equal` | half the cap plus uniform over `[0, cap/2]`. Keeps a floor under the wait |
 /// | `Decorrelated` | uniform over `[base, previous × 3]`. Grows from where it last landed rather than from the attempt number |
+/// | `Spread(f)` | uniform over `[cap × (1 − f), cap × (1 + f)]`, `f` held to `[0, 1]`. So the wait can pass the cap by `f` |
 pub(all) enum Jitter {
   Rigid
   Full
   Equal
   Decorrelated
+  Spread(Double)
 } derive(Eq, Debug)
 
 ///|
@@ -48,17 +52,18 @@ pub extend Backoff with Eq::{not_equal, equal}
 
 ///|
 /// The preset: three attempts, a hundred milliseconds doubling to a one-second
-/// ceiling, spread by full jitter.
+/// ceiling, spread by a fifth either way.
 ///
-/// Those are gRPC's documented defaults for a retry policy — `maxAttempts` 3,
-/// `initialBackoff` 0.1s, `maxBackoff` 1s, `backoffMultiplier` 2 — and gRPC sleeps
-/// a value drawn uniformly from `[0, cap]`, which is full jitter.
+/// The schedule is the retry policy gRPC's proposal A6 prints — `initialBackoff`
+/// 0.1s, `maxBackoff` 1s, `backoffMultiplier` 2 — and the spread is the
+/// `random(0.8, 1.2)` it applies, which grpc-go and grpc-java both draw. Three
+/// attempts is the default of the AWS SDKs' standard retry mode.
 pub let backoff : Backoff = {
   base: @moondate.Span::new(millis=100L),
   factor: 2.0,
   cap: @moondate.Span::new(seconds=1L),
   attempts: 3,
-  jitter: Full,
+  jitter: Spread(0.2),
 }
 
 ///|
@@ -123,6 +128,11 @@ pub fn Backoff::delay(
   match self.jitter {
     Rigid => ceiling
     Full => { nanos: (ceiling.nanos.to_double() * clamp(random)).to_int64(), }
+    Spread(f) => {
+      let f = if f < 0.0 { 0.0 } else if f > 1.0 { 1.0 } else { f }
+      let scale = 1.0 - f + 2.0 * f * clamp(random)
+      { nanos: (ceiling.nanos.to_double() * scale).to_int64(), }
+    }
     Equal => {
       let half = ceiling.nanos / 2L
       { nanos: half + (half.to_double() * clamp(random)).to_int64(), }

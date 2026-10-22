@@ -73,7 +73,7 @@ The breaker and the shedder each take one policy record, with a preset of the sa
 |:--:|:--|:--|
 | `sre` | `k` 1.5 decaying to 1.1, protection 5, probe after 1 s, 40 buckets over 10 s | go-zero `googlebreaker.go` |
 | `shed` | 50 buckets over 5 s, CPU threshold 900‰, 1 s assumed response time, average weight 0.9, 1 s to cool, never under 0.1 of capacity | go-zero `adaptiveshedder.go` |
-| `backoff` | 3 attempts, 100 ms doubling to 1 s, full jitter | gRPC retry policy defaults |
+| `backoff` | 3 attempts, 100 ms doubling to 1 s, a fifth either way | gRPC proposal A6 for the schedule and spread, as grpc-go and grpc-java draw it; the AWS SDKs' standard mode for the attempts |
 
 `Period` resets a day after first use unless `align` is set, which is go-zero's `PeriodLimit` default. A `Deadline` with a budget of zero or less never expires, which is how go-zero and gRPC spell no timeout.
 

@@ -22,12 +22,12 @@ test "the ceiling doubles from the base and stops at the cap" {
 }
 
 ///|
-test "the preset is the one gRPC documents" {
+test "the preset is the schedule and spread gRPC retries with" {
   assert_eq(backoff.attempts, 3)
   assert_eq(milli(backoff.base), 100L)
   assert_eq(milli(backoff.cap), 1000L)
   assert_eq(backoff.factor, 2.0)
-  assert_eq(backoff.jitter, Full)
+  assert_eq(backoff.jitter, Spread(0.2))
 }
 
 ///|
@@ -57,6 +57,19 @@ test "each jitter draws where its definition says" {
   // Equal keeps a floor of half and spans the other half.
   assert_eq(milli(equal.delay(2, random=0.0)), 100L)
   assert_eq(milli(equal.delay(2, random=0.5)), 150L)
+}
+
+///|
+test "spread draws a fraction either side of the ceiling, past the cap included" {
+  let grpc = Backoff::new(jitter=Spread(0.2))
+  assert_eq(milli(grpc.delay(2, random=0.0)), 160L)
+  assert_eq(milli(grpc.delay(2, random=0.5)), 200L)
+  assert_eq(milli(grpc.delay(2, random=0.75)), 220L)
+  // At the cap the wait can be a fifth over it, as A6 says.
+  assert_eq(milli(grpc.delay(9, random=0.75)), 1100L)
+  // A fraction outside [0, 1] is held to it.
+  assert_eq(milli(Backoff::new(jitter=Spread(-1.0)).delay(2, random=0.9)), 200L)
+  assert_eq(milli(Backoff::new(jitter=Spread(5.0)).delay(2, random=0.0)), 0L)
 }
 
 ///|
