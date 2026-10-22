@@ -1,0 +1,9 @@
+// A backend failing and recovering behind a breaker, a server shedding under
+// load, and the limiters: `moon run src/examples/tour`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonward",
+  "moonbitstack/moondate",
+  "moonbitlang/core/debug",
+}

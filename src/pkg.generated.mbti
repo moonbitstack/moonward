@@ -1,0 +1,211 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonward"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitstack/moondate",
+}
+
+// Values
+pub let backoff : Backoff
+
+pub let shed : Shed
+
+pub let sre : Sre
+
+// Errors
+
+// Types and methods
+pub(all) struct Backoff {
+  base : @moondate.Span
+  factor : Double
+  cap : @moondate.Span
+  attempts : Int32
+  jitter : Jitter
+} derive(Eq, @debug.Debug)
+pub fn Backoff::ceiling(Self, Int32) -> @moondate.Span
+pub fn Backoff::delay(Self, Int32, random? : Double, previous? : @moondate.Span) -> @moondate.Span
+pub fn Backoff::equal(Self, Self) -> Bool
+pub fn Backoff::more(Self, Int32) -> Bool
+pub fn Backoff::new(base? : @moondate.Span, factor? : Double, cap? : @moondate.Span, attempts? : Int32, jitter? : Jitter) -> Self
+pub fn Backoff::not_equal(Self, Self) -> Bool
+pub fn Backoff::schedule(Self, randoms? : ArrayView[Double]) -> Array[@moondate.Span]
+pub fn Backoff::to_repr(Self) -> @debug.Repr
+
+pub struct Breaker {
+  sre : Sre
+  win : Window[Tally]
+  mut last : Int64?
+}
+pub fn Breaker::allow(Self, Int64, Double) -> Promise?
+pub fn Breaker::new(sre? : Sre, now? : Int64) -> Self
+pub fn Breaker::ratio(Self, Int64) -> Double
+
+pub struct Bucket {
+  rate : Double
+  burst : Double
+  mut tokens : Double
+  mut at : Int64
+}
+pub fn Bucket::new(Double, burst? : Double, now? : Int64) -> Self
+pub fn Bucket::next(Self, Int64, n? : Double) -> @moondate.Span
+pub fn Bucket::take(Self, Int64, n? : Double) -> Bool
+pub fn Bucket::tokens(Self, Int64) -> Double
+
+pub struct Deadline {
+  start : Int64
+  budget : Int64
+}
+pub fn Deadline::expired(Self, Int64) -> Bool
+pub fn Deadline::remaining(Self, Int64) -> @moondate.Span?
+pub fn Deadline::start(@moondate.Span, Int64) -> Self
+
+pub struct Gate {
+  limit : Int32
+  mut held : Int32
+}
+pub fn Gate::enter(Self) -> Bool
+pub fn Gate::held(Self) -> Int32
+pub fn Gate::leave(Self) -> Unit
+pub fn Gate::new(Int32) -> Self
+
+pub(all) enum Jitter {
+  Rigid
+  Full
+  Equal
+  Decorrelated
+} derive(Eq, @debug.Debug)
+pub fn Jitter::equal(Self, Self) -> Bool
+pub fn Jitter::not_equal(Self, Self) -> Bool
+pub fn Jitter::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Outcome {
+  Success
+  Failure
+  Drop
+} derive(Eq, @debug.Debug)
+pub fn Outcome::equal(Self, Self) -> Bool
+pub fn Outcome::not_equal(Self, Self) -> Bool
+pub fn Outcome::to_repr(Self) -> @debug.Repr
+
+pub struct Period {
+  quota : Int32
+  period : Int64
+  align : Bool
+  mut start : Int64?
+  mut count : Int32
+}
+pub fn Period::left(Self, Int64) -> Int32
+pub fn Period::new(Int32, @moondate.Span, align? : Bool) -> Self
+pub fn Period::next(Self, Int64) -> @moondate.Span
+pub fn Period::take(Self, Int64) -> Quota
+
+pub struct Promise {
+  breaker : Breaker
+}
+pub fn Promise::fail(Self, Int64) -> Unit
+pub fn Promise::pass(Self, Int64) -> Unit
+
+pub(all) enum Quota {
+  Under
+  Hit
+  Over
+} derive(Eq, @debug.Debug)
+pub fn Quota::equal(Self, Self) -> Bool
+pub fn Quota::not_equal(Self, Self) -> Bool
+pub fn Quota::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Shed {
+  size : Int32
+  window : @moondate.Span
+  cpu : Int32
+  latency : @moondate.Span
+  beta : Double
+  cool : @moondate.Span
+  floor : Double
+} derive(Eq, @debug.Debug)
+pub fn Shed::equal(Self, Self) -> Bool
+pub fn Shed::new(size? : Int32, window? : @moondate.Span, cpu? : Int32, latency? : @moondate.Span, beta? : Double, cool? : @moondate.Span, floor? : Double) -> Self
+pub fn Shed::not_equal(Self, Self) -> Bool
+pub fn Shed::to_repr(Self) -> @debug.Repr
+
+pub struct Shedder {
+  shed : Shed
+  passes : Window[Total]
+  latencies : Window[Total]
+  mut flying : Int64
+  mut average : Double
+  mut hot : Int64?
+  mut dropped : Bool
+}
+pub fn Shedder::allow(Self, Int64, Int32) -> Ticket?
+pub fn Shedder::flying(Self) -> Int64
+pub fn Shedder::new(shed? : Shed, now? : Int64) -> Self
+
+pub struct Sliding {
+  quota : Int32
+  window : @moondate.Span
+  stamps : Array[Int64]
+}
+pub fn Sliding::left(Self, Int64) -> Int32
+pub fn Sliding::new(Int32, @moondate.Span) -> Self
+pub fn Sliding::next(Self, Int64) -> @moondate.Span
+pub fn Sliding::take(Self, Int64) -> Bool
+
+pub(all) struct Sre {
+  k : Double
+  floor : Double
+  protection : Double
+  probe : @moondate.Span
+  size : Int32
+  window : @moondate.Span
+} derive(Eq, @debug.Debug)
+pub fn Sre::equal(Self, Self) -> Bool
+pub fn Sre::new(k? : Double, floor? : Double, protection? : Double, probe? : @moondate.Span, size? : Int32, window? : @moondate.Span) -> Self
+pub fn Sre::not_equal(Self, Self) -> Bool
+pub fn Sre::to_repr(Self) -> @debug.Repr
+
+pub struct Tally {
+  mut total : Int64
+  mut success : Int64
+  mut failure : Int64
+  mut drop : Int64
+} derive(Default, Eq, @debug.Debug)
+pub fn Tally::add(Self, Outcome) -> Unit
+pub fn Tally::default() -> Self
+pub fn Tally::equal(Self, Self) -> Bool
+pub fn Tally::not_equal(Self, Self) -> Bool
+pub fn Tally::to_repr(Self) -> @debug.Repr
+
+pub struct Ticket {
+  shedder : Shedder
+  start : Int64
+}
+pub fn Ticket::fail(Self) -> Unit
+pub fn Ticket::pass(Self, Int64) -> Unit
+
+pub struct Total {
+  mut sum : Int64
+  mut count : Int64
+} derive(Default, Eq, @debug.Debug)
+pub fn Total::add(Self, Int64) -> Unit
+pub fn Total::default() -> Self
+pub fn Total::equal(Self, Self) -> Bool
+pub fn Total::not_equal(Self, Self) -> Bool
+pub fn Total::to_repr(Self) -> @debug.Repr
+
+pub struct Window[B] {
+  width : Int64
+  buckets : Array[B]
+  mut head : Int32
+  mut start : Int64
+}
+pub fn[B] Window::each(Self[B], Int64, (B) -> Unit, current? : Bool) -> Unit
+pub fn[B : Default] Window::new(size~ : Int32, window~ : @moondate.Span, now? : Int64) -> Self[B]
+pub fn[B] Window::size(Self[B]) -> Int32
+pub fn[B : Default] Window::slot(Self[B], Int64) -> B
+pub fn[B] Window::width(Self[B]) -> @moondate.Span
+
+// Type aliases
+
+// Traits
