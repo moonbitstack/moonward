@@ -61,6 +61,10 @@ A call is refused only when the server is both hot and full, which is go-zero's 
 
 A CPU spike with nothing queued refuses nothing, and neither does a queue on an idle CPU.
 
+## Where they run
+
+[moonpool](https://github.com/moonbitstack/moonpool) puts a breaker, a bucket, a backoff and a shedder in front of a resource pool as a `Ward`, so a pool stops connecting to a failing backend and spaces out its reconnections; moondb's connection pool takes the same ward. [moonzero](https://github.com/moonbitstack/moonzero) runs go-zero's breaker, shedder, limiters and timeout middleware on these parts, with go-zero's millisecond clock on the outside.
+
 ## Configuration
 
 The breaker and the shedder each take one policy record, with a preset of the same name: `Breaker::new(sre=...)`, `Shedder::new(shed=...)`. A policy is built with `Sre::new(k=2.0)`, or from the preset with `{ ..sre, k: 2.0 }`; the two are the same value. There are no per-call overrides, so there is nothing to rank.
@@ -75,4 +79,4 @@ The breaker and the shedder each take one policy record, with a preset of the sa
 
 ## Licence
 
-Apache-2.0.
+Apache-2.0. See [LICENSE](LICENSE).
