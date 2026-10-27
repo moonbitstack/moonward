@@ -825,3 +825,13 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* every scroll container on a doc page keeps the machine's scrollbar */
+.formula::-webkit-scrollbar {
+  height: 8px;
+}
+
+.formula::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border: 2px solid var(--plate);
+}
