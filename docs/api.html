@@ -596,7 +596,7 @@ drop ×= (size - working) / size</pre>
     <span class="api__derived">let shed : Shed</span>
   </header>
   <div class="api__doc"><p>The preset: five seconds in fifty buckets, overloaded at 90% CPU, a one-second assumed response time, an average weighted 0.9, one second to cool and never less than a tenth of capacity.</p>
-<p>A five-second memory, a threshold at ninety percent, and a floor under the share of capacity admitted: the values that make a server shed only when it is genuinely out of room.</p></div>
+<p>The memory is short on purpose: a five-second window follows the load it is in rather than averaging a burst away, and the floor keeps a server already at full CPU from being told it can serve nobody.</p></div>
 </article>
 
 <article class="api api--value" id="backoff" data-name="backoff">
@@ -606,7 +606,7 @@ drop ×= (size - working) / size</pre>
     <span class="api__derived">let backoff : Backoff</span>
   </header>
   <div class="api__doc"><p>The preset: three attempts, a hundred milliseconds doubling to a one-second ceiling, spread by a fifth either way.</p>
-<p>The schedule is a hundred milliseconds doubling to a one-second ceiling, and the spread keeps each wait within a fifth below or above that: a plan <code>0.8</code> to <code>1.2</code> of the computed ceiling, which is easy to explain to whoever asks why the second retry waited 168 ms.</p></div>
+<p>Each wait is the computed ceiling spread by a fifth below or above it, so a plan of <code>0.8</code> to <code>1.2</code> of the schedule is easy to explain to whoever asks why the second retry waited 168 ms and not 200.</p></div>
 </article>
 </section>
   </main>

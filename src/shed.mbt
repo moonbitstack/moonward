@@ -37,9 +37,9 @@ pub extend Shed with Eq::{not_equal, equal}
 /// assumed response time, an average weighted 0.9, one second to cool and never
 /// less than a tenth of capacity.
 ///
-/// A five-second memory, a threshold at ninety percent, and a floor under the
-/// share of capacity admitted: the values that make a server shed only when it
-/// is genuinely out of room.
+/// The memory is short on purpose: a five-second window follows the load it is
+/// in rather than averaging a burst away, and the floor keeps a server already at
+/// full CPU from being told it can serve nobody.
 pub let shed : Shed = {
   size: 50,
   window: @moondate.Span::new(seconds=5L),

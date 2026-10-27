@@ -54,10 +54,9 @@ pub extend Backoff with Eq::{not_equal, equal}
 /// The preset: three attempts, a hundred milliseconds doubling to a one-second
 /// ceiling, spread by a fifth either way.
 ///
-/// The schedule is a hundred milliseconds doubling to a one-second ceiling, and
-/// the spread keeps each wait within a fifth below or above that: a plan
-/// `0.8` to `1.2` of the computed ceiling, which is easy to explain to whoever
-/// asks why the second retry waited 168 ms.
+/// Each wait is the computed ceiling spread by a fifth below or above it, so a
+/// plan of `0.8` to `1.2` of the schedule is easy to explain to whoever asks why
+/// the second retry waited 168 ms and not 200.
 pub let backoff : Backoff = {
   base: @moondate.Span::new(millis=100L),
   factor: 2.0,
