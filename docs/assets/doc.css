@@ -1,0 +1,828 @@
+/* ==========================================================================
+   doc — the guide and the reference share a page frame
+   ========================================================================== */
+
+.doc-head {
+  padding-top: clamp(34px, 5vw, 64px);
+  padding-bottom: clamp(26px, 3.6vw, 44px);
+}
+
+.doc-head__meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.doc-head__meta .tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-head__meta .tag + .tag::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  background: var(--hot);
+  transform: rotate(45deg);
+  margin-right: 2px;
+}
+
+.doc-head__title {
+  margin-top: 22px;
+  font-size: clamp(44px, 7.4vw, 92px);
+  line-height: 0.86;
+  letter-spacing: -0.02em;
+}
+
+.doc-head__title em {
+  font-style: normal;
+  color: var(--hot);
+}
+
+.doc-head__lede {
+  margin-top: 20px;
+  font-size: clamp(14.5px, 1.3vw, 16.5px);
+  line-height: 1.65;
+  color: var(--dim);
+  max-width: 62ch;
+}
+
+.doc-head__cmd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.doc-head__cmd .mono::before {
+  content: "$ ";
+  color: var(--hot);
+}
+
+.doc-head__cmd a:hover {
+  color: var(--ink);
+}
+
+/* --- frame -------------------------------------------------------------- */
+
+.doc {
+  display: grid;
+  grid-template-columns: 206px minmax(0, 1fr);
+  gap: 0 clamp(28px, 4vw, 56px);
+  padding-top: 34px;
+  align-items: start;
+}
+
+.toc {
+  position: sticky;
+  top: 74px;
+  align-self: start;
+}
+
+.toc__t {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.toc__list a {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 8px 6px 10px;
+  border-left: 2px solid transparent;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  color: var(--dim);
+  transition: color 0.14s var(--ease), border-color 0.14s var(--ease);
+}
+
+.toc__list a i {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--faint);
+  min-width: 14px;
+}
+
+.toc__list a:hover {
+  color: var(--ink);
+  border-left-color: var(--line);
+}
+
+.toc__list a[aria-current="true"] {
+  color: var(--hot);
+  border-left-color: var(--hot);
+  background: var(--plate);
+}
+
+.toc__list a[aria-current="true"] i {
+  color: var(--hot);
+}
+
+/* --- a station ---------------------------------------------------------- */
+
+.doc__main {
+  min-width: 0;
+  border-left: 1px solid var(--line);
+  padding-left: clamp(20px, 3vw, 40px);
+}
+
+.step {
+  padding-block: clamp(30px, 4vw, 46px);
+  border-top: 1px solid var(--line-soft);
+  scroll-margin-top: 74px;
+}
+
+.step:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.step__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.step__no {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  font-family: "Big Shoulders Display", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--hot);
+  background: var(--plate);
+  flex: none;
+}
+
+.step__t {
+  font-size: clamp(27px, 3.2vw, 40px);
+  line-height: 0.95;
+}
+
+.step__body p {
+  margin-top: 16px;
+  font-size: 14.5px;
+  line-height: 1.68;
+  color: var(--dim);
+  max-width: 64ch;
+}
+
+.step__body p code,
+.doc-head__lede code {
+  font-size: 0.9em;
+  color: var(--ink);
+  background: var(--plate-2);
+  padding: 1px 4px;
+}
+
+.step__body a {
+  color: var(--ink);
+  border-bottom: 1px solid var(--hot);
+}
+
+.step__body a:hover {
+  color: var(--hot);
+}
+
+.step .screen {
+  margin-top: 20px;
+}
+
+/* --- the formula -------------------------------------------------------- */
+
+.formula {
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--hot);
+  background: var(--plate);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--dim);
+  overflow-x: auto;
+}
+
+.formula__row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.formula__row span:first-child {
+  color: var(--hot);
+  font-weight: 500;
+}
+
+/* --- the runs ----------------------------------------------------------- */
+
+.runs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-top: 20px;
+}
+
+.run {
+  background: var(--plate);
+  padding: 16px 16px 18px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  transition: background 0.15s var(--ease);
+}
+
+.run:hover {
+  background: var(--plate-2);
+}
+
+.run__no {
+  font-size: 9.5px;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  padding-top: 6px;
+}
+
+.run__n {
+  font-family: "Big Shoulders Display", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.run__d {
+  grid-column: 2;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dim);
+  margin-top: 6px;
+}
+
+.doc-next {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+
+.copy {
+  margin-left: 10px;
+  border: 1px solid var(--screen-line);
+  background: transparent;
+  color: var(--screen-dim);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+
+.copy:hover {
+  color: var(--screen-ink);
+  border-color: var(--screen-dim);
+}
+
+@media (width <= 980px) {
+  .doc {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 20px;
+  }
+
+  .toc {
+    position: static;
+    padding-bottom: 18px;
+  }
+
+  .toc__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-top: 10px;
+  }
+
+  .toc__list a {
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    padding: 4px 8px;
+  }
+
+  .toc__list a[aria-current="true"] {
+    border-bottom-color: var(--hot);
+  }
+
+  .doc__main {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .runs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width <= 860px) {
+  .step__no {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .step__head {
+    gap: 12px;
+  }
+
+  .formula {
+    font-size: 10.5px;
+    padding: 12px;
+  }
+
+  .formula__row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+}
+
+/* ==========================================================================
+   api — the reference
+   ========================================================================== */
+
+.api-head {
+  padding-bottom: 0;
+}
+
+.api-head .doc-head__title {
+  font-size: clamp(38px, 5vw, 62px);
+  margin-top: 16px;
+}
+
+.api-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+  padding-bottom: 16px;
+}
+
+.api-search input {
+  flex: 1;
+  min-width: 0;
+  max-width: 460px;
+  background: var(--plate);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  padding: 10px 12px;
+  appearance: none;
+}
+
+.api-search input::placeholder {
+  color: var(--faint);
+}
+
+.api-search input:focus {
+  outline: none;
+  border-color: var(--hot);
+  box-shadow: inset 0 -2px 0 var(--hot);
+}
+
+.api-search__count {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+
+.api-doc {
+  padding-top: 30px;
+}
+
+.idx {
+  list-style: none;
+  margin: 0;
+  padding: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.idx > li > a {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.idx > li > a i {
+  font-style: normal;
+  color: var(--hot);
+  font-size: 9.5px;
+}
+
+.idx__types {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 3px;
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+.idx__types a {
+  display: block;
+  padding: 3px 0 3px 10px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+.idx__types a:hover {
+  color: var(--hot);
+}
+
+.group {
+  padding-bottom: 34px;
+}
+
+.group__t {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: clamp(24px, 2.8vw, 34px);
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 6px;
+}
+
+.group__t i {
+  font-style: normal;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--hot);
+  font-weight: 500;
+}
+
+.api {
+  border-bottom: 1px solid var(--line-soft);
+  padding-block: 24px 20px;
+  scroll-margin-top: 76px;
+}
+
+.api--value {
+  padding-block: 20px;
+}
+
+.api__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.api__name {
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.chip {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  padding: 2px 6px 1px;
+}
+
+.chip--kind {
+  color: var(--hot);
+  border-color: color-mix(in oklab, var(--hot) 45%, transparent);
+}
+
+.api__derived {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+
+.api__doc {
+  margin-top: 12px;
+  max-width: 72ch;
+}
+
+.api__doc p {
+  font-size: 14px;
+  line-height: 1.66;
+  color: var(--dim);
+  margin-top: 10px;
+}
+
+.api__doc p code,
+.params td code,
+.api__note code {
+  font-size: 0.92em;
+  color: var(--ink);
+}
+
+.api__doc a,
+.params a {
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+
+.api__doc a:hover {
+  border-color: var(--hot);
+  color: var(--hot);
+}
+
+.api__doc .ref {
+  border-bottom: 1px dotted var(--hot);
+  text-decoration: none;
+}
+
+.api__doc .ref code {
+  color: var(--hot);
+  font-size: 0.92em;
+}
+
+.api__doc ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.api__doc pre.snippet {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: var(--screen);
+  color: var(--screen-ink);
+  border: 1px solid #000;
+  font-size: 11.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.mdlabel {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hot);
+  margin-top: 14px;
+}
+
+.api__note {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--faint);
+  font-style: italic;
+}
+
+.variants {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.variants li {
+  border: 1px solid var(--line);
+  background: var(--plate);
+  padding: 2px 7px;
+}
+
+.variants code {
+  font-size: 11.5px;
+  color: var(--ink);
+}
+
+/* --- parameter tables --------------------------------------------------- */
+
+.params {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 12px;
+}
+
+.params th {
+  text-align: left;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  border-bottom: 1px solid var(--line);
+  padding: 0 12px 6px 0;
+}
+
+.params td {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 7px 12px 7px 0;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.params tr:last-child td {
+  border-bottom: 0;
+}
+
+.params .pname {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.params .pname code {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.params .lab {
+  font-style: normal;
+  color: var(--hot);
+  margin-left: 1px;
+}
+
+.params .ptype {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.params .ptype code {
+  color: var(--dim);
+  font-size: 11.5px;
+}
+
+.params .pdef {
+  white-space: nowrap;
+  width: 1%;
+  color: var(--faint);
+}
+
+.params .pdef .dflt {
+  color: var(--sig);
+  font-size: 11.5px;
+}
+
+.params .pdoc {
+  color: var(--dim);
+  min-width: 18ch;
+}
+
+.mtable {
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.mtable th,
+.mtable td {
+  border: 1px solid var(--line-soft);
+  padding: 5px 9px;
+  text-align: left;
+  color: var(--dim);
+  vertical-align: top;
+}
+
+.mtable th {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* --- methods ------------------------------------------------------------ */
+
+.fns {
+  margin-top: 18px;
+  border-left: 2px solid var(--line);
+  padding-left: clamp(12px, 2vw, 20px);
+}
+
+.fn {
+  padding-block: 14px;
+  border-top: 1px dotted var(--line);
+  scroll-margin-top: 76px;
+}
+
+.fn:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.fn__sig {
+  background: var(--screen);
+  border: 1px solid #000;
+  color: var(--screen-ink);
+  padding: 9px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fn__sig code {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fn__sig::-webkit-scrollbar {
+  height: 6px;
+}
+
+.fn__sig::-webkit-scrollbar-thumb {
+  background: #394044;
+  border: 1px solid var(--screen);
+}
+
+.fn__doc {
+  margin-top: 12px;
+}
+
+.fn__doc p {
+  font-size: 13.5px;
+  line-height: 1.64;
+  color: var(--dim);
+  margin-top: 8px;
+  max-width: 72ch;
+}
+
+.fn .params {
+  margin-top: 10px;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.group.is-empty {
+  display: none;
+}
+
+@media (width <= 860px) {
+  .api-search input {
+    max-width: 100%;
+  }
+
+  .params th:nth-child(3),
+  .params td.pdef {
+    display: none;
+  }
+
+  .fn__sig {
+    font-size: 11px;
+  }
+}
+
+@media (width <= 560px) {
+  .params th:nth-child(2),
+  .params td.ptype {
+    display: none;
+  }
+
+  .params td.pdoc {
+    min-width: 12ch;
+    overflow-wrap: anywhere;
+  }
+}

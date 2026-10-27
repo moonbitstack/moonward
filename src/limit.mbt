@@ -22,6 +22,11 @@ pub struct Bucket {
 ///
 /// `rate` is tokens per second and `burst` is the most it will ever hold. A burst
 /// smaller than one means nothing ever passes, so it is raised to one.
+///
+/// # Parameters
+/// - `rate` : tokens accrued per second
+/// - `burst` : the most the bucket will ever hold; with none given, the rate, and never under one
+/// - `now` : the clock reading the bucket starts at, `0L` by default
 pub fn Bucket::new(
   rate : Double,
   burst~ : Double = 0.0,
@@ -33,6 +38,10 @@ pub fn Bucket::new(
 
 ///|
 /// Whether `n` tokens are available now, taking them if they are.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
+/// - `n` : how many tokens the call costs, one by default
 pub fn Bucket::take(self : Bucket, now : Int64, n~ : Double = 1.0) -> Bool {
   self.fill(now)
   if self.tokens >= n {
@@ -47,6 +56,10 @@ pub fn Bucket::take(self : Bucket, now : Int64, n~ : Double = 1.0) -> Bool {
 ///
 /// Zero when they are available now. This is what a caller sleeps for rather than
 /// spinning, and what a `Retry-After` header is computed from.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
+/// - `n` : how many tokens are wanted, one by default
 pub fn Bucket::next(
   self : Bucket,
   now : Int64,
@@ -67,6 +80,9 @@ pub fn Bucket::next(
 
 ///|
 /// How many tokens are in the bucket, for a caller that reports its own headroom.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Bucket::tokens(self : Bucket, now : Int64) -> Double {
   self.fill(now)
   self.tokens
@@ -103,12 +119,19 @@ pub struct Sliding {
 
 ///|
 /// An empty window.
+///
+/// # Parameters
+/// - `quota` : events allowed in any `window`-long stretch
+/// - `window` : the length of that stretch
 pub fn Sliding::new(quota : Int32, window : @moondate.Span) -> Sliding {
   { quota, window, stamps: [], }
 }
 
 ///|
 /// Whether an event is within the quota now, counting it if it is.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Sliding::take(self : Sliding, now : Int64) -> Bool {
   self.forget(now)
   if self.stamps.length() < self.quota {
@@ -120,6 +143,9 @@ pub fn Sliding::take(self : Sliding, now : Int64) -> Bool {
 
 ///|
 /// How many events remain in the current window.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Sliding::left(self : Sliding, now : Int64) -> Int32 {
   self.forget(now)
   let used = self.stamps.length()
@@ -132,6 +158,9 @@ pub fn Sliding::left(self : Sliding, now : Int64) -> Int32 {
 
 ///|
 /// When the window will next have room, which is when its oldest event falls out.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Sliding::next(self : Sliding, now : Int64) -> @moondate.Span {
   self.forget(now)
   if self.stamps.length() < self.quota {
@@ -158,7 +187,6 @@ fn Sliding::forget(self : Sliding, now : Int64) -> Unit {
 ///
 /// The event that hits the quota is still admitted. It is told apart because it is
 /// the last one, which is when a caller would warn that the next will be refused.
-/// These are go-zero's `Allowed`, `HitQuota` and `OverQuota`.
 pub(all) enum Quota {
   Under
   Hit
@@ -176,8 +204,9 @@ pub extend Quota with Eq::{not_equal, equal}
 /// again when a period ends.
 ///
 /// Cheaper than [`Sliding`], which keeps every stamp, and coarser: a client can
-/// spend one quota at the end of a period and another at the start of the next.
-/// That is the trade go-zero's `PeriodLimit` makes, and this is it without Redis.
+/// spend one quota at the end of a period and another at the start of the next,
+/// so forty events can pass in a second that allows twenty. That is the trade a
+/// fixed window makes, and the reason it is the cheap one.
 ///
 /// A period opens on the first event after the last one closed. With `align` it
 /// opens on a multiple of `period` on the caller's clock instead, so with a Unix
@@ -193,6 +222,11 @@ pub struct Period {
 ///|
 /// A counter no event has touched. A period shorter than a nanosecond is raised to
 /// one.
+///
+/// # Parameters
+/// - `quota` : events allowed per period
+/// - `period` : how long a period is; anything under a nanosecond is raised to one
+/// - `align` : open periods on multiples of `period` on the caller's clock instead of a period after first use
 pub fn Period::new(
   quota : Int32,
   period : @moondate.Span,
@@ -213,6 +247,9 @@ pub fn Period::new(
 
 ///|
 /// Count one event at `now` and say where the quota stands.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Period::take(self : Period, now : Int64) -> Quota {
   self.roll(now)
   if self.start is None {
@@ -236,6 +273,9 @@ pub fn Period::take(self : Period, now : Int64) -> Quota {
 
 ///|
 /// How many events remain in the current period.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Period::left(self : Period, now : Int64) -> Int32 {
   self.roll(now)
   if self.count >= self.quota {
@@ -248,6 +288,9 @@ pub fn Period::left(self : Period, now : Int64) -> Int32 {
 ///|
 /// How long until the current period ends. Zero when no period is open, because
 /// the next event would open one.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Period::next(self : Period, now : Int64) -> @moondate.Span {
   self.roll(now)
   match self.start {
@@ -280,6 +323,9 @@ pub struct Gate {
 
 ///|
 /// A gate that nothing has entered.
+///
+/// # Parameters
+/// - `limit` : how many calls may be inside at once; zero or less means no ceiling
 pub fn Gate::new(limit : Int32) -> Gate {
   { limit, held: 0, }
 }

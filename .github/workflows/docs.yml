@@ -1,0 +1,71 @@
+name: Docs
+
+# Builds the site in docs/ and publishes it to Pages. The interactive panels on
+# the site are the library itself compiled to JavaScript, so the engine is built
+# here and never committed: `docs/assets/moonward.js` is in .gitignore.
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: install moonbit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: post install
+        run: |
+          moon version --all
+          moon update
+
+      # The API page is generated from the interface file and the doc comments.
+      # If either moved without the page being regenerated, this stops the
+      # deploy rather than publishing a reference that is out of date.
+      - name: interfaces are up to date
+        run: |
+          moon info --target all
+          git diff --exit-code src/pkg.generated.mbti
+
+      - name: api page is up to date
+        run: |
+          python3 scripts/gen_api.py
+          git diff --exit-code docs/api.html
+
+      - name: build the panel engine
+        run: |
+          moon build src/demo --target js --release
+          cp _build/js/release/build/demo/demo.js docs/assets/moonward.js
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-26.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

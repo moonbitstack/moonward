@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide — moonward</title>
+<meta name="description" content="From the first breaker call to a window of your own: the whole library, once, with the output every step prints.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/doc.css">
+</head>
+<body>
+
+<div class="hud" aria-hidden="true">
+  <i class="hud__c hud__c--bl"></i>
+  <i class="hud__c hud__c--br"></i>
+  <div class="hud__gauge"><i data-gauge></i></div>
+  <div class="hud__read mono" data-hud-read>000</div>
+</div>
+
+<nav class="rail">
+  <div class="rail__in">
+    <a class="rail__mark" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="M4 20V7l8 9 8-9v13"/><path d="M4 4h16" opacity=".45"/>
+      </svg>
+      <span>moonward</span>
+    </a>
+    <div class="rail__ch">
+      <a href="guide.html" aria-current="page"><b>01</b> Guide</a>
+      <a href="api.html"><b>02</b> API</a>
+      <a href="bay.html"><b>03</b> Bay</a>
+    </div>
+    <a class="rail__git" href="https://github.com/moonbitstack/moonward" aria-label="Repository on GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+    <span class="rail__ver">v0.2.0</span>
+  </div>
+</nav>
+
+<header class="doc-head shell">
+  <div class="doc-head__meta">
+    <span class="tag">Guide</span>
+    <span class="tag">10 stations</span>
+    <span class="tag">one program</span>
+  </div>
+  <h1 class="doc-head__title">The whole library,<br><em>once</em></h1>
+  <p class="doc-head__lede">Ten steps from an empty project to a rolling window of your own. Every block below is a stretch of one program, and the lines under it are what that program printed — unedited, integers and all.</p>
+  <div class="doc-head__cmd">
+    <span class="mono">moon run src/examples/guide</span>
+    <a class="tag tag--hot" href="https://github.com/moonbitstack/moonward/blob/master/src/examples/guide/main.mbt">the file itself →</a>
+  </div>
+</header>
+
+<div class="hazard"></div>
+
+<div class="doc shell">
+  <aside class="toc" aria-label="Stations">
+    <div class="toc__in">
+      <p class="toc__t">Stations</p>
+      <ol class="toc__list">
+        <li><a href="#s01" data-toc><i>01</i> Install</a></li>
+        <li><a href="#s02" data-toc><i>02</i> The first call</a></li>
+        <li><a href="#s03" data-toc><i>03</i> Reading the breaker</a></li>
+        <li><a href="#s04" data-toc><i>04</i> A bucket</a></li>
+        <li><a href="#s05" data-toc><i>05</i> Quotas</a></li>
+        <li><a href="#s06" data-toc><i>06</i> Room</a></li>
+        <li><a href="#s07" data-toc><i>07</i> Load</a></li>
+        <li><a href="#s08" data-toc><i>08</i> Waiting</a></li>
+        <li><a href="#s09" data-toc><i>09</i> A budget</a></li>
+        <li><a href="#s10" data-toc><i>10</i> A window</a></li>
+        <li><a href="#s11" data-toc><i>11</i> Next</a></li>
+      </ol>
+    </div>
+  </aside>
+
+  <main class="doc__main">
+
+    <section class="step" id="s01" data-station>
+      <header class="step__head">
+        <span class="step__no">01</span>
+        <h2 class="step__t">Install</h2>
+      </header>
+      <div class="step__body">
+        <p>One module, one dependency beyond the standard library. Durations are <code>Span</code>s, so <code>moondate</code> comes with it.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>terminal</b><span class="spacer"></span>one line</div>
+        <pre class="code" data-lang="shell">moon add moonbitstack/moonward@0.2.0</pre>
+      </div>
+      <div class="step__body">
+        <p>The package is imported as <code>@moonward</code>. Nothing else is needed: there is no configuration, no runtime, no global to install.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>moon.pkg</b><span class="spacer"></span>what the import looks like</div>
+        <pre class="code" data-lang="moonbit">import {
+  "moonbitstack/moonward",
+  "moonbitstack/moondate",
+}</pre>
+      </div>
+    </section>
+
+    <section class="step" id="s02" data-station>
+      <header class="step__head">
+        <span class="step__no">02</span>
+        <h2 class="step__t">The first call</h2>
+      </header>
+      <div class="step__body">
+        <p>Ask for permission, and settle the answer when the call is over. <code>allow</code> returns a <code>Promise</code> or nothing, and the promise is settled exactly once with <code>pass</code> or <code>fail</code>. Both take the clock reading the call finished at.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>first.mbt</b><span class="spacer"></span>breaker</div>
+        <pre class="code" data-lang="moonbit">let now = 0L
+let breaker = @moonward.Breaker::new()
+match breaker.allow(now, 0.42) {
+  Some(call) =&gt; call.pass(now)
+  None =&gt; println("backend refused")
+}
+println("empty window, ratio \{percent(breaker.ratio(now))}")</pre>
+        <pre class="out">empty window, ratio 0%</pre>
+      </div>
+      <div class="step__body">
+        <p><code>0.42</code> is the draw, not a probability you choose: it is what your random number generator gave you this time, in <code>[0, 1)</code>. A fresh breaker has no failures behind it, so nothing is refused and the draw is never consulted.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s03" data-station>
+      <header class="step__head">
+        <span class="step__no">03</span>
+        <h2 class="step__t">Reading the breaker</h2>
+      </header>
+      <div class="step__body">
+        <p>Ten good calls, then a backend that has stopped answering. The ratio is the fraction of calls the breaker would refuse at that instant — a number for a dashboard, and the same number <code>allow</code> compares the draw against.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>breaker.mbt</b><span class="spacer"></span>one call every 100 ms</div>
+        <pre class="code" data-lang="moonbit">let breaker = @moonward.Breaker::new()
+let mut at = 0L
+for _ in 0..&lt;10 {
+  at = tick(breaker, at, true)
+}
+println("10 good   ratio \{percent(breaker.ratio(at))}")
+for _ in 0..&lt;15 {
+  at = tick(breaker, at, false)
+}
+println("15 bad    ratio \{percent(breaker.ratio(at))}")</pre>
+        <pre class="out">10 good   ratio 0%
+15 bad    ratio 22%
+15 more   ratio 51%</pre>
+      </div>
+      <div class="step__body">
+        <p>A success pays for one and a half calls, and every backend is allowed five calls regardless, so a window has to be about a third failures before anything is refused. Past that the fraction climbs with every bad call and falls again as the failures age out of the ten-second window.</p>
+        <div class="formula">
+          <div class="formula__row"><span>w</span><span>= max( k − (k − floor) · failing / size , floor )</span></div>
+          <div class="formula__row"><span>drop</span><span>= ( total − protection − w · accepts ) / ( total + 1 )</span></div>
+          <div class="formula__row"><span>ratio</span><span>= drop · ( size − working ) / size</span></div>
+        </div>
+        <p><code>failing</code> and <code>working</code> count buckets, not calls: the run of all-failure buckets at the head of the window and the run of all-success ones. A bucket that saw both ends both runs.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s04" data-station>
+      <header class="step__head">
+        <span class="step__no">04</span>
+        <h2 class="step__t">A bucket</h2>
+      </header>
+      <div class="step__body">
+        <p>A token bucket holds a burst and refills at a rate. Two tokens a second with room for three: three calls go through at once, the fourth does not, and half a second later there is another token.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>bucket.mbt</b><span class="spacer"></span>2/s, burst 3</div>
+        <pre class="code" data-lang="moonbit">let bucket = @moonward.Bucket::new(2.0, burst=3.0)
+let took = [0, 1, 2, 3].map(_ =&gt; bucket.take(0L))
+println("took      \{@debug.to_string(took)}")
+println("tokens    \{bucket.tokens(0L)}")
+println("next      \{bucket.next(0L).nanos / 1_000_000L} ms")</pre>
+        <pre class="out">took      [true, true, true, false]
+tokens    0
+next      500 ms</pre>
+      </div>
+      <div class="step__body">
+        <p><code>next</code> is what a refusal is worth telling the caller: how long until a token is there, without spending one to find out. It is the number a <code>Retry-After</code> header is made of.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s05" data-station>
+      <header class="step__head">
+        <span class="step__no">05</span>
+        <h2 class="step__t">Quotas</h2>
+      </header>
+      <div class="step__body">
+        <p>A rate is not a quota. "A thousand a day" counted as a rate would let a client spend the day's allowance before breakfast. Both of these count instead — one over any window-long stretch, one per fixed period.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>quota.mbt</b><span class="spacer"></span>two per second</div>
+        <pre class="code" data-lang="moonbit">let second = @moondate.Span::new(seconds=1L)
+let sliding = @moonward.Sliding::new(2, second)
+let period = @moonward.Period::new(2, second, align=true)
+println("sliding   \{@debug.to_string([0L, 1L, 2L].map(_ =&gt; sliding.take(0L)))}")
+println("period    \{@debug.to_string([0L, 1L, 2L].map(_ =&gt; period.take(0L)))}")
+println("left      \{sliding.left(0L)} of 2")</pre>
+        <pre class="out">sliding   [true, true, false]
+period    [Under, Hit, Over]
+left      0 of 2</pre>
+      </div>
+      <div class="step__body">
+        <p><code>Hit</code> is the call that lands exactly on the quota. It is admitted, but it is told apart from <code>Under</code> because it is the last one — the moment to warn rather than wait for the next refusal.</p>
+        <p>The difference between the two shows up under bursty traffic: a period can spend one quota at the end of a period and another at the start of the next, so forty calls can pass in a second that allows twenty. <a href="https://github.com/moonbitstack/moonward/blob/master/src/examples/limiters/main.mbt">The limiters example</a> runs exactly that and prints the three answers side by side.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s06" data-station>
+      <header class="step__head">
+        <span class="step__no">06</span>
+        <h2 class="step__t">Room</h2>
+      </header>
+      <div class="step__body">
+        <p>A concurrency limit is the one primitive here that has nothing to do with time. Two slots, three calls: the third is answered no rather than queued, which is what keeps a queue from becoming the outage.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>gate.mbt</b><span class="spacer"></span>two slots</div>
+        <pre class="code" data-lang="moonbit">let gate = @moonward.Gate::new(2)
+println("enter     \{gate.enter()} \{gate.enter()} \{gate.enter()}")
+println("held      \{gate.held()}")
+gate.leave()
+println("after one leaves, held \{gate.held()}, enter \{gate.enter()}")</pre>
+        <pre class="out">enter     true true false
+held      2
+after one leaves, held 1, enter true</pre>
+      </div>
+      <div class="step__body">
+        <p><code>leave</code> is safe to call more often than <code>enter</code> succeeded: it stops at zero rather than going negative.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s07" data-station>
+      <header class="step__head">
+        <span class="step__no">07</span>
+        <h2 class="step__t">Load</h2>
+      </header>
+      <div class="step__body">
+        <p>The shedder is the last thing between an overloaded server and its event loop. It refuses work only when the server is both hot and full: the CPU at or over the threshold, and more calls in flight than the server has shown it can finish.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>load.mbt</b><span class="spacer"></span>50 ms calls, one a millisecond</div>
+        <pre class="code" data-lang="moonbit">let shedder = @moonward.Shedder::new()
+let open : Array[(@moonward.Ticket, Int64)] = []
+let mut refused = 0
+for i in 0L..&lt;2000L {
+  let now = ms(i)
+  // ... settle every ticket whose 50 ms are up ...
+  // Idle at first, then the CPU pins at 95%.
+  let cpu = if i &lt; 500L { 200 } else { 950 }
+  match shedder.allow(now, cpu) {
+    Some(ticket) =&gt; open.push((ticket, i + 50L))
+    None =&gt; refused = refused + 1
+  }
+}
+println("in flight \{shedder.flying()}  refused \{refused} of 2000")</pre>
+        <pre class="out">in flight 26  refused 720 of 2000</pre>
+      </div>
+      <div class="step__body">
+        <p>A CPU spike with nothing queued refuses nothing, and neither does a long queue on an idle CPU — both have to be true. The capacity it compares against is the busiest bucket's passes per millisecond times the fastest bucket's mean response time, scaled down as the CPU nears 100%.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s08" data-station>
+      <header class="step__head">
+        <span class="step__no">08</span>
+        <h2 class="step__t">Waiting</h2>
+      </header>
+      <div class="step__body">
+        <p>Retries without jitter synchronise: every client that failed together comes back together, and one outage becomes two. The policy carries the schedule, the caller carries the randomness.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>backoff.mbt</b><span class="spacer"></span>100 ms doubling to 1 s</div>
+        <pre class="code" data-lang="moonbit">let rigid = @moonward.Backoff::new(jitter=Rigid)
+let full = @moonward.Backoff::new(jitter=Full)
+let spread = @moonward.backoff
+println(@debug.to_string([1, 2, 3].map(r =&gt; (spread.ceiling(r).nanos / 1_000_000L).to_int())))
+println(@debug.to_string(rigid.schedule(randoms=[0.9, 0.9]).map(d =&gt; (d.nanos / 1_000_000L).to_int())))
+println(@debug.to_string(full.schedule(randoms=[0.9, 0.9]).map(d =&gt; (d.nanos / 1_000_000L).to_int())))
+println(@debug.to_string(spread.schedule(randoms=[0.9, 0.1]).map(d =&gt; (d.nanos / 1_000_000L).to_int())))
+println("more      \{spread.more(2)} \{spread.more(3)}")</pre>
+        <pre class="out">ceiling   [100, 200, 400] ms
+rigid     [100, 200] ms
+full      [90, 180] ms
+spread    [116, 168] ms
+more      true false</pre>
+      </div>
+      <div class="step__body">
+        <p><code>ceiling</code> is public and jitter-free on purpose: it is the number to compare against when the same policy is written somewhere else. <code>more(3)</code> is false because the preset allows three attempts, and the first attempt counts.</p>
+        <p>Five strategies ship in <code>Jitter</code>: <code>Rigid</code>, <code>Full</code>, <code>Equal</code>, <code>Decorrelated</code> and <code>Spread(f)</code>, which keeps the wait within <code>f</code> of the ceiling in either direction and is what the preset uses at a fifth.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s09" data-station>
+      <header class="step__head">
+        <span class="step__no">09</span>
+        <h2 class="step__t">A budget</h2>
+      </header>
+      <div class="step__body">
+        <p>A deadline is a start and a budget, and it answers two questions: has it run out, and how much is left. A budget of zero or less never expires, so a timeout left unset cannot time everything out at once.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>budget.mbt</b><span class="spacer"></span>two seconds</div>
+        <pre class="code" data-lang="moonbit">let deadline = @moonward.Deadline::start(@moondate.Span::new(seconds=2L), 0L)
+println("at 1.5 s  expired \{deadline.expired(ms(1500L))}")
+println("at 2.0 s  expired \{deadline.expired(ms(2000L))}")
+match deadline.remaining(ms(1500L)) {
+  Some(left) =&gt; println("left      \{left.nanos / 1_000_000L} ms")
+  None =&gt; println("left      none")
+}</pre>
+        <pre class="out">at 1.5 s  expired false
+at 2.0 s  expired true
+left      500 ms</pre>
+      </div>
+      <div class="step__body">
+        <p><code>remaining</code> returns <code>None</code> rather than zero when there is no budget, because an unlimited budget has no finite remainder — and a caller should not treat "no deadline" as "almost out".</p>
+      </div>
+    </section>
+
+    <section class="step" id="s10" data-station>
+      <header class="step__head">
+        <span class="step__no">10</span>
+        <h2 class="step__t">A window of your own</h2>
+      </header>
+      <div class="step__body">
+        <p>The breaker and the shedder are both a rolling window with arithmetic on top. The window itself is public, and any type with a <code>Default</code> can be a bucket — here, a count of calls per hundred milliseconds.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>window.mbt</b><span class="spacer"></span>4 buckets over 400 ms</div>
+        <pre class="code" data-lang="moonbit">struct Hits {
+  mut calls : Int64
+} derive(Default, Debug)
+
+let window : @moonward.Window[Hits] = @moonward.Window::new(
+  size=4,
+  window=@moondate.Span::new(millis=400L),
+)
+window.slot(0L).calls += 3
+window.slot(ms(100L)).calls += 5
+window.slot(ms(150L)).calls += 2
+let mut seen = 0L
+window.each(ms(150L), b =&gt; seen = seen + b.calls)
+println("width     \{window.width().nanos / 1_000_000L} ms, \{window.size()} buckets")
+println("calls     \{seen} inside the window")</pre>
+        <pre class="out">width     100 ms, 4 buckets
+calls     10 inside the window</pre>
+      </div>
+      <div class="step__body">
+        <p>Writing at a later <code>now</code> clears the buckets the gap swept past. Reading at a later <code>now</code> skips them without clearing, so a window nobody writes to still ages out, and two reads at the same <code>now</code> agree.</p>
+        <p><code>each</code> visits the live buckets oldest first. Pass <code>current=false</code> to leave out the bucket <code>now</code> falls in: it has seen only part of its time, and a reading that takes the busiest or the fastest bucket should not compare a partial one against whole ones.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s11" data-station>
+      <header class="step__head">
+        <span class="step__no">11</span>
+        <h2 class="step__t">Next</h2>
+      </header>
+      <div class="step__body">
+        <p>Four programs in the repository, each one runnable as it stands.</p>
+      </div>
+      <div class="runs">
+        <a class="run" href="https://github.com/moonbitstack/moonward/blob/master/src/examples/minimal/main.mbt">
+          <span class="run__no mono">01</span>
+          <span class="run__n">minimal</span>
+          <span class="run__d">One breaker, one failing backend, four lines of output. The smallest thing that works.</span>
+        </a>
+        <a class="run" href="https://github.com/moonbitstack/moonward/blob/master/src/examples/limiters/main.mbt">
+          <span class="run__no mono">02</span>
+          <span class="run__n">limiters</span>
+          <span class="run__d">The same bursty traffic through a bucket, a slide and a period, and the three different answers.</span>
+        </a>
+        <a class="run" href="https://github.com/moonbitstack/moonward/blob/master/src/examples/tour/main.mbt">
+          <span class="run__no mono">03</span>
+          <span class="run__n">tour</span>
+          <span class="run__d">A breaker under an outage, a shedder under rising load, then one step through each limiter.</span>
+        </a>
+        <a class="run" href="https://github.com/moonbitstack/moonward/blob/master/src/examples/guide/main.mbt">
+          <span class="run__no mono">04</span>
+          <span class="run__n">guide</span>
+          <span class="run__d">This page as a program, in the order you read it.</span>
+        </a>
+      </div>
+      <div class="step__body">
+        <p>The API reference lists every type and method with its parameters and defaults. The bay lets you turn the knobs and watch the same code answer.</p>
+      </div>
+      <div class="doc-next">
+        <a class="btn" href="api.html">API reference <span aria-hidden="true">→</span></a>
+        <a class="btn btn--ghost" href="bay.html">Open the bay</a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot shell">
+  <span>moonward 0.2.0</span>
+  <span>Apache-2.0</span>
+  <a href="https://github.com/moonbitstack/moonward">GitHub</a>
+  <a href="https://mooncakes.io/docs/moonbitstack/moonward">mooncakes</a>
+  <span class="spacer"></span>
+  <a href="index.html">Home</a>
+  <a href="api.html">API</a>
+  <a href="bay.html">Bay</a>
+</footer>
+
+<script type="module" src="assets/site.js"></script>
+</body>
+</html>

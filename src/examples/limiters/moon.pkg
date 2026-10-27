@@ -1,0 +1,8 @@
+// A bucket, a sliding window and a period, offered the same traffic:
+// `moon run src/examples/limiters`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonward",
+  "moonbitstack/moondate",
+}

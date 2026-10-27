@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// The constants of Google SRE's client-side throttling.
+/// The constants of probability-based client-side throttling.
 ///
 /// The preset is [`sre`]. Build another with [`Sre::new`], or update one in place
 /// with `{ ..sre, k: 2.0 }`.
@@ -35,9 +35,10 @@ pub extend Sre with Eq::{not_equal, equal}
 /// The preset: `k` 1.5 decaying to 1.1, five calls of protection, a probe every
 /// second, and ten seconds of history in forty buckets.
 ///
-/// These are the constants of go-zero's `core/breaker/googlebreaker.go`. `k` and
-/// `protection` are the `K` and the floor of the SRE book's equation 21-1; the
-/// decay, the probe and the recovery scaling are go-zero's additions.
+/// `k` and `protection` are the slope and the floor of the standard client-side
+/// throttling formula; the decay, the probe and the recovery scaling are what
+/// keep a long outage from hurting past successes, and a short one from being
+/// remembered for long.
 pub let sre : Sre = {
   k: 1.5,
   floor: 1.1,
@@ -49,6 +50,14 @@ pub let sre : Sre = {
 
 ///|
 /// A policy by name, every knob with the preset's value.
+///
+/// # Parameters
+/// - `k` : how many calls each success pays for; the preset's `1.5` leaves a backend alone until more than a third of its calls fail
+/// - `floor` : what `k` decays to during an outage, `1.1` in the preset
+/// - `protection` : calls every backend gets regardless, `5` in the preset
+/// - `probe` : how long with nothing let through before one call is let through anyway
+/// - `size` : buckets in the window, `40` in the preset
+/// - `window` : how far back the window reaches, `10 s` in the preset
 pub fn Sre::new(
   k~ : Double = sre.k,
   floor~ : Double = sre.floor,
@@ -61,7 +70,7 @@ pub fn Sre::new(
 }
 
 ///|
-/// The window folded the way go-zero folds it. `failing` and `working` are runs
+/// The window folded into runs. `failing` and `working` are runs
 /// at the head of the window, not totals: a bucket that saw both a success and a
 /// failure ends both runs, and an empty bucket ends neither.
 priv struct Health {
@@ -98,6 +107,10 @@ pub struct Breaker {
 
 ///|
 /// A breaker with an empty window opening at `now`.
+///
+/// # Parameters
+/// - `sre` : the policy; the [`sre`](#sre) preset by default
+/// - `now` : the clock reading the window opens at, `0L` by default
 pub fn Breaker::new(sre~ : Sre = sre, now~ : Int64 = 0L) -> Breaker {
   { sre, win: Window::new(size=sre.size, window=sre.window, now~), last: None, }
 }
@@ -142,6 +155,9 @@ fn Breaker::odds(self : Breaker, now : Int64) -> (Double, Double) {
 ///
 /// The probe is left out: this is the standing throttle, which is what a dashboard
 /// or an alert wants.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn Breaker::ratio(self : Breaker, now : Int64) -> Double {
   let (drop, ease) = self.odds(now)
   if drop <= 0.0 {
@@ -158,6 +174,10 @@ pub fn Breaker::ratio(self : Breaker, now : Int64) -> Double {
 /// drop fraction. `Some` means go ahead, and the caller settles the promise once
 /// the call has finished. A refusal is recorded as a `Drop`, so a breaker that is
 /// refusing never reads back as idle and throttles itself off.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
+/// - `roll` : a draw from `[0, 1)`
 pub fn Breaker::allow(self : Breaker, now : Int64, roll : Double) -> Promise? {
   let (drop, ease) = self.odds(now)
   if drop <= 0.0 {
@@ -185,12 +205,18 @@ pub struct Promise {
 
 ///|
 /// The call succeeded.
+///
+/// # Parameters
+/// - `now` : the clock reading the call finished at
 pub fn Promise::pass(self : Promise, now : Int64) -> Unit {
   self.breaker.win.slot(now).add(Success)
 }
 
 ///|
 /// The call failed.
+///
+/// # Parameters
+/// - `now` : the clock reading the call finished at
 pub fn Promise::fail(self : Promise, now : Int64) -> Unit {
   self.breaker.win.slot(now).add(Failure)
 }

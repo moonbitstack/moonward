@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>moonward — resilience primitives for MoonBit</title>
+<meta name="description" content="A circuit breaker, adaptive load shedding, rate limits, quotas, concurrency limits, backoff and deadlines for MoonBit. No I/O, no clock, no dice.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/home.css">
+</head>
+<body class="home">
+
+<div class="hud" aria-hidden="true">
+  <i class="hud__c hud__c--tl"></i>
+  <i class="hud__c hud__c--tr"></i>
+  <i class="hud__c hud__c--bl"></i>
+  <i class="hud__c hud__c--br"></i>
+  <div class="hud__gauge"><i data-gauge></i></div>
+  <div class="hud__read mono" data-hud-read>000</div>
+</div>
+
+<nav class="rail">
+  <div class="rail__in">
+    <a class="rail__mark" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="M4 20V7l8 9 8-9v13"/><path d="M4 4h16" opacity=".45"/>
+      </svg>
+      <span>moonward</span>
+    </a>
+    <div class="rail__ch">
+      <a href="guide.html"><b>01</b> Guide</a>
+      <a href="api.html"><b>02</b> API</a>
+      <a href="bay.html"><b>03</b> Bay</a>
+    </div>
+    <a class="rail__git" href="https://github.com/moonbitstack/moonward" aria-label="Repository on GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+    <span class="rail__ver">v0.2.0</span>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="shell hero__grid">
+    <div class="hero__text">
+      <p class="eyebrow">MoonBit · resilience primitives</p>
+      <h1 class="hero__title"><span>Moon</span><span>ward</span></h1>
+      <p class="lede">Keep a failing dependency from taking the rest of the system down with it. Nine primitives that decide from the numbers you hand them, so a ten-second outage replays in a loop that takes no time at all.</p>
+      <div class="hero__acts">
+        <a class="btn" href="guide.html">Read the guide <span aria-hidden="true">→</span></a>
+        <a class="btn btn--ghost" href="bay.html">Open the bay</a>
+      </div>
+      <p class="hero__cmd"><span class="mono">moon add moonbitstack/moonward@0.2.0</span></p>
+    </div>
+
+    <figure class="inst plate" id="inst" aria-label="Live circuit breaker driven by the compiled library">
+      <div class="inst__bar">
+        <span class="tag tag--hot">Bay 01</span>
+        <h2 class="inst__name">Circuit breaker</h2>
+        <span class="inst__live"><i class="led led--hot led--pulse"></i> running</span>
+      </div>
+      <div class="inst__body">
+        <div class="inst__read">
+          <div class="inst__num"><span data-read="ratio">0.0</span><em>%</em></div>
+          <div class="inst__cap tag">of calls refused at t=<span data-read="clock">0.0</span>s</div>
+        </div>
+        <div class="inst__scope">
+          <canvas id="hero-scope" aria-label="Refused calls per 100 ms"></canvas>
+          <div class="inst__scale mono"><span>0 s</span><span>5 s</span><span>10 s</span></div>
+        </div>
+      </div>
+      <div class="inst__foot">
+        <div class="inst__stat"><span class="mono" data-read="sent">0</span><span class="tag">sent</span></div>
+        <div class="inst__stat"><span class="mono hot" data-read="failed">0</span><span class="tag">failed</span></div>
+        <div class="inst__stat"><span class="mono hot" data-read="refused">0</span><span class="tag">refused</span></div>
+        <div class="inst__ctl">
+          <button class="btn btn--sm" data-act="fault">Inject fault</button>
+          <button class="btn btn--sm btn--ghost" data-act="again">Run again</button>
+        </div>
+      </div>
+      <figcaption class="inst__note mono">computed by moonward compiled to JavaScript · seed 0x2f</figcaption>
+    </figure>
+  </div>
+
+  <div class="shell specs">
+    <div class="spec">
+      <span class="spec__n">09</span>
+      <span class="spec__l">primitives</span>
+      <p>Breaker, shedder, bucket, sliding window, period, gate, backoff, deadline, rolling window.</p>
+    </div>
+    <div class="spec">
+      <span class="spec__n">00</span>
+      <span class="spec__l">clock reads</span>
+      <p>Every call takes <code>now</code> in nanoseconds from your clock. Nothing here samples one.</p>
+    </div>
+    <div class="spec">
+      <span class="spec__n">01</span>
+      <span class="spec__l">draw per decision</span>
+      <p>A breaker's roll and a backoff's jitter ask you for a value in <code>[0, 1)</code>.</p>
+    </div>
+    <div class="spec">
+      <span class="spec__n">10<em>s</em></span>
+      <span class="spec__l">breaker memory</span>
+      <p>Forty buckets of outcomes. A backend that recovers is noticed within one of them.</p>
+    </div>
+  </div>
+</header>
+
+<div class="hazard"></div>
+
+<section class="conveyor" aria-label="The primitives">
+  <div class="conveyor__track">
+    <div class="conveyor__run mono">
+      <span>Breaker</span><i></i><span>Shedder</span><i></i><span>Bucket</span><i></i><span>Sliding</span><i></i><span>Period</span><i></i><span>Gate</span><i></i><span>Backoff</span><i></i><span>Deadline</span><i></i><span>Window</span><i></i>
+      <span>Breaker</span><i></i><span>Shedder</span><i></i><span>Bucket</span><i></i><span>Sliding</span><i></i><span>Period</span><i></i><span>Gate</span><i></i><span>Backoff</span><i></i><span>Deadline</span><i></i><span>Window</span><i></i>
+    </div>
+  </div>
+</section>
+
+<section class="chain shell" id="chain">
+  <div class="head">
+    <span class="head__no mono">01</span>
+    <h2 class="head__t">Four places<br>a request can die</h2>
+    <p class="head__p">Each check is a struct you hold in your own code and a call that returns <code>Option</code>. In this order, a request that was never going to succeed is turned away before it costs a socket.</p>
+  </div>
+
+  <div class="chain__body">
+    <input type="radio" name="st" id="st1" checked>
+    <input type="radio" name="st" id="st2">
+    <input type="radio" name="st" id="st3">
+    <input type="radio" name="st" id="st4">
+
+    <div class="chain__rail">
+      <label for="st1" class="st">
+        <span class="st__no mono">01</span>
+        <span class="st__name">Room</span>
+        <span class="st__type mono">Gate</span>
+      </label>
+      <label for="st2" class="st">
+        <span class="st__no mono">02</span>
+        <span class="st__name">Odds</span>
+        <span class="st__type mono">Breaker</span>
+      </label>
+      <label for="st3" class="st">
+        <span class="st__no mono">03</span>
+        <span class="st__name">Rate</span>
+        <span class="st__type mono">Bucket · Sliding · Period</span>
+      </label>
+      <label for="st4" class="st">
+        <span class="st__no mono">04</span>
+        <span class="st__name">Load</span>
+        <span class="st__type mono">Shedder</span>
+      </label>
+      <span class="chain__flow" aria-hidden="true"><i></i></span>
+    </div>
+
+    <div class="chain__panes">
+      <div class="pane" data-pane="1">
+        <div class="pane__txt">
+          <h3>Is there room right now?</h3>
+          <p>A count with a ceiling. It has nothing to do with time: it is how many calls are inside at this instant. Past the limit the answer is no, not later.</p>
+          <p class="pane__kv"><span class="tag">Refuses</span> when <code>held</code> has reached <code>limit</code></p>
+        </div>
+        <div class="screen">
+          <div class="screen__bar"><b>gate</b><span class="spacer"></span>64 slots</div>
+<pre class="code" data-lang="moonbit">let gate = @moonward.Gate::new(64)
+if gate.enter() {
+  // the call runs, then
+  gate.leave()
+}</pre>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="2">
+        <div class="pane__txt">
+          <h3>How likely is this backend to work?</h3>
+          <p>Not a switch. The breaker keeps ten seconds of outcomes and refuses each call with a probability that grows with the failures in that window, so a struggling backend keeps getting what it can still serve.</p>
+          <p class="pane__kv"><span class="tag">Refuses</span> when a draw falls under <code>ratio(now)</code></p>
+        </div>
+        <div class="screen">
+          <div class="screen__bar"><b>breaker</b><span class="spacer"></span>window 10s</div>
+<pre class="code" data-lang="moonbit">let b = @moonward.Breaker::new()
+match b.allow(now, roll) {
+  Some(p) =&gt; p.pass(now) // or p.fail(now)
+  None =&gt; refused
+}</pre>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="3">
+        <div class="pane__txt">
+          <h3>Is this caller within its allowance?</h3>
+          <p>Three answers to three different questions. A bucket smooths a rate and lets a burst through. A sliding window counts events in any window-long stretch. A period counts them per fixed period, which is cheaper and coarser.</p>
+          <p class="pane__kv"><span class="tag">Refuses</span> when the token, the count or the quota is spent</p>
+        </div>
+        <div class="screen">
+          <div class="screen__bar"><b>limiters</b><span class="spacer"></span>100 / s</div>
+<pre class="code" data-lang="moonbit">let rate = @moonward.Bucket::new(100.0)
+let quota = @moonward.Sliding::new(1000, day)
+let daily = @moonward.Period::new(1000, day, align=true)
+rate.take(now) // true while tokens last</pre>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="4">
+        <div class="pane__txt">
+          <h3>Is this server hot and full?</h3>
+          <p>Both, or nothing is refused. A CPU spike with nothing queued sheds nothing, and neither does a long queue on an idle CPU. The threshold is what the server has shown it can finish.</p>
+          <p class="pane__kv"><span class="tag">Refuses</span> when <code>cpu</code> is over the threshold and calls in flight are over capacity</p>
+        </div>
+        <div class="screen">
+          <div class="screen__bar"><b>shedder</b><span class="spacer"></span>cpu 950‰</div>
+<pre class="code" data-lang="moonbit">let s = @moonward.Shedder::new()
+match s.allow(now, cpu) {
+  Some(t) =&gt; t.pass(now) // or t.fail()
+  None =&gt; "overloaded"
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="parts shell" id="parts">
+  <div class="head">
+    <span class="head__no mono">02</span>
+    <h2 class="head__t">The parts bin</h2>
+    <p class="head__p">Nine types, one policy record each where a policy makes sense. Every preset can be copied and changed with two braces: <code>{ ..sre, k: 2.0 }</code>.</p>
+  </div>
+
+  <div class="bin">
+    <article class="part span5">
+      <header><span class="part__no mono">MW-01</span><h3>Breaker</h3></header>
+      <p>Refuses a growing fraction of calls as a backend fails, and eases off as it recovers. Keeps a rolling window of outcomes; never opens, never closes.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <path d="M0 47h240" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="2 4"/>
+        <path d="M0 12h240" stroke="currentColor" stroke-opacity=".18" stroke-dasharray="2 4"/>
+        <path d="M0 47h58l6-4 6-9 7-11 8-8 9-4h14l7 5 7 8 7 9 8 6 9 4 10 2h14l10-1 11-1 11-1h14" stroke="var(--hot)" stroke-width="1.4"/>
+        <g fill="var(--hot)"><circle cx="70" cy="43" r="2.2"/><circle cx="103" cy="15" r="2.2"/><circle cx="146" cy="33" r="2.2"/><circle cx="196" cy="39" r="2.2"/></g>
+      </svg>
+    </article>
+
+    <article class="part span4">
+      <header><span class="part__no mono">MW-02</span><h3>Shedder</h3></header>
+      <p>Refuses work only when the CPU is hot and the calls in flight are over what this server has shown it can finish.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-opacity=".3">
+          <rect x="0" y="2" width="19" height="11"/><rect x="23" y="2" width="19" height="11"/><rect x="46" y="2" width="19" height="11"/><rect x="69" y="2" width="19" height="11"/><rect x="92" y="2" width="19" height="11"/><rect x="115" y="2" width="19" height="11"/><rect x="138" y="2" width="19" height="11"/><rect x="161" y="2" width="19" height="11"/>
+          <rect x="0" y="17" width="19" height="11"/><rect x="23" y="17" width="19" height="11"/><rect x="46" y="17" width="19" height="11"/><rect x="69" y="17" width="19" height="11"/><rect x="92" y="17" width="19" height="11"/><rect x="115" y="17" width="19" height="11"/><rect x="161" y="17" width="19" height="11"/>
+          <rect x="0" y="32" width="19" height="11"/><rect x="23" y="32" width="19" height="11"/><rect x="46" y="32" width="19" height="11"/><rect x="69" y="32" width="19" height="11"/><rect x="92" y="32" width="19" height="11"/><rect x="115" y="32" width="19" height="11"/>
+          <rect x="138" y="32" width="19" height="11"/><rect x="161" y="32" width="19" height="11"/>
+        </g>
+        <rect x="138" y="17" width="19" height="11" fill="var(--hot)"/>
+        <rect x="138" y="32" width="19" height="11" fill="var(--hot)"/>
+        <rect x="161" y="32" width="19" height="11" fill="var(--hot)"/>
+        <path d="M184 47V2" stroke="currentColor" stroke-opacity=".45" stroke-dasharray="3 3"/>
+        <path d="M0 47h184" stroke="currentColor" stroke-opacity=".45"/>
+      </svg>
+    </article>
+
+    <article class="part">
+      <header><span class="part__no mono">MW-03</span><h3>Bucket</h3></header>
+      <p>A token bucket. Accrues at a rate, holds up to a burst, spends one token a call.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <path d="M0 10h240" stroke="currentColor" stroke-opacity=".25"/>
+        <g fill="var(--sig)">
+          <rect x="2" y="18" width="16" height="28"/><rect x="22" y="18" width="16" height="28"/><rect x="42" y="18" width="16" height="28"/><rect x="62" y="18" width="16" height="28"/><rect x="82" y="18" width="16" height="28"/><rect x="102" y="18" width="16" height="28"/>
+        </g>
+        <g stroke="currentColor" stroke-opacity=".4" stroke-dasharray="3 3">
+          <rect x="122" y="18" width="16" height="28"/><rect x="142" y="18" width="16" height="28"/><rect x="162" y="18" width="16" height="28"/><rect x="182" y="18" width="16" height="28"/><rect x="202" y="18" width="16" height="28"/><rect x="222" y="18" width="16" height="28"/>
+        </g>
+        <path d="M110 10V2" stroke="var(--hot)"/>
+        <path d="M104 9h12" stroke="var(--hot)"/>
+      </svg>
+    </article>
+
+    <article class="part">
+      <header><span class="part__no mono">MW-04</span><h3>Sliding</h3></header>
+      <p>At most a quota of events in any window-long stretch. Keeps each stamp, so the count is exact.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <path d="M0 44h240" stroke="currentColor" stroke-opacity=".3"/>
+        <g fill="currentColor" fill-opacity=".55">
+          <rect x="8" y="34" width="3" height="10"/><rect x="18" y="34" width="3" height="10"/><rect x="31" y="34" width="3" height="10"/><rect x="44" y="34" width="3" height="10"/><rect x="57" y="34" width="3" height="10"/><rect x="70" y="34" width="3" height="10"/><rect x="140" y="34" width="3" height="10"/><rect x="152" y="34" width="3" height="10"/><rect x="165" y="34" width="3" height="10"/><rect x="178" y="34" width="3" height="10"/><rect x="191" y="34" width="3" height="10"/>
+        </g>
+        <rect x="44" y="6" width="72" height="48" stroke="var(--sig)" stroke-dasharray="3 3"/>
+        <path d="M44 2h72" stroke="var(--sig)"/>
+        <path d="M44 0v4M116 0v4" stroke="var(--sig)"/>
+      </svg>
+    </article>
+
+    <article class="part">
+      <header><span class="part__no mono">MW-05</span><h3>Period</h3></header>
+      <p>A quota per fixed period, reset at a multiple of the period when aligned. Cheaper than a slide, coarser.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <path d="M0 46h240" stroke="currentColor" stroke-opacity=".3"/>
+        <path d="M0 26h240" stroke="var(--hot)" stroke-opacity=".55" stroke-dasharray="4 4"/>
+        <g fill="var(--sig)" fill-opacity=".8">
+          <rect x="8" y="34" width="8" height="12"/><rect x="20" y="22" width="8" height="24"/><rect x="32" y="30" width="8" height="16"/><rect x="44" y="18" width="8" height="28"/>
+        </g>
+        <path d="M60 46V6" stroke="currentColor" stroke-opacity=".55"/>
+        <g fill="currentColor" fill-opacity=".55">
+          <rect x="70" y="28" width="8" height="18"/><rect x="82" y="16" width="8" height="30"/><rect x="94" y="34" width="8" height="12"/><rect x="106" y="24" width="8" height="22"/><rect x="118" y="36" width="8" height="10"/><rect x="130" y="20" width="8" height="26"/><rect x="142" y="32" width="8" height="14"/><rect x="154" y="38" width="8" height="8"/><rect x="166" y="28" width="8" height="18"/><rect x="178" y="34" width="8" height="12"/><rect x="190" y="40" width="8" height="6"/><rect x="202" y="30" width="8" height="16"/><rect x="214" y="36" width="8" height="10"/><rect x="226" y="42" width="8" height="4"/>
+        </g>
+      </svg>
+    </article>
+
+    <article class="part">
+      <header><span class="part__no mono">MW-06</span><h3>Gate</h3></header>
+      <p>A concurrency limit. Counts what is inside now, and does not know what time it is.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <g fill="currentColor" fill-opacity=".55">
+          <rect x="2" y="12" width="26" height="30"/><rect x="32" y="12" width="26" height="30"/><rect x="62" y="12" width="26" height="30"/><rect x="92" y="12" width="26" height="30"/><rect x="122" y="12" width="26" height="30"/>
+        </g>
+        <g stroke="var(--hot)" stroke-dasharray="3 3">
+          <rect x="152" y="12" width="26" height="30"/><rect x="182" y="12" width="26" height="30"/><rect x="212" y="12" width="26" height="30"/>
+        </g>
+        <path d="M0 6h146" stroke="currentColor" stroke-opacity=".45"/>
+        <path d="M146 2v8" stroke="var(--hot)"/>
+      </svg>
+    </article>
+
+    <article class="part">
+      <header><span class="part__no mono">MW-07</span><h3>Backoff</h3></header>
+      <p>When to try again and how long to wait first. Five jitter strategies, each drawing from the value you pass.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <path d="M0 48h240" stroke="currentColor" stroke-opacity=".3"/>
+        <g stroke="currentColor" stroke-opacity=".45"><path d="M14 48V16"/><path d="M52 48V8"/><path d="M90 48V13"/><path d="M128 48V4"/><path d="M166 48V10"/><path d="M204 48V6"/></g>
+        <g fill="var(--hot)">
+          <circle cx="14" cy="28" r="2.4"/><circle cx="52" cy="20" r="2.4"/><circle cx="90" cy="26" r="2.4"/><circle cx="128" cy="12" r="2.4"/><circle cx="166" cy="24" r="2.4"/><circle cx="204" cy="16" r="2.4"/>
+        </g>
+        <path d="M14 44l38-30 38 4 38-22 38 14 38-14" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="2 3"/>
+      </svg>
+    </article>
+
+    <article class="part span6">
+      <header><span class="part__no mono">MW-08</span><h3>Deadline</h3></header>
+      <p>A budget measured from the instant it started. A budget of zero never expires, so an unset timeout cannot time everything out at once.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <rect x="0" y="20" width="240" height="14" stroke="currentColor" stroke-opacity=".4"/>
+        <rect x="0" y="20" width="92" height="14" fill="var(--hot)"/>
+        <g stroke="currentColor" stroke-opacity=".3"><path d="M60 16v22M120 16v22M180 16v22"/></g>
+        <path d="M92 12v30" stroke="currentColor"/>
+        <path d="M86 8h12" stroke="currentColor"/>
+      </svg>
+    </article>
+
+    <article class="part span6">
+      <header><span class="part__no mono">MW-09</span><h3>Window</h3></header>
+      <p>A rolling window of buckets you define. Anything with a <code>Default</code> can be a bucket, and the default is what a bucket is cleared back to.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-opacity=".35">
+          <rect x="2" y="14" width="30" height="26"/><rect x="36" y="14" width="30" height="26"/><rect x="70" y="14" width="30" height="26"/><rect x="104" y="14" width="30" height="26"/><rect x="138" y="14" width="30" height="26"/><rect x="172" y="14" width="30" height="26"/>
+        </g>
+        <rect x="206" y="14" width="30" height="26" fill="var(--hot)" fill-opacity=".85"/>
+        <path d="M36 4h134" stroke="var(--sig)"/>
+        <path d="M36 0v8M170 0v8" stroke="var(--sig)"/>
+      </svg>
+    </article>
+  </div>
+
+</section>
+
+<section class="out shell" id="out">
+  <div class="head">
+    <span class="head__no mono">03</span>
+    <h2 class="head__t">What it prints</h2>
+    <p class="head__p">Three runs from the example program, unchanged. Nothing is rounded for the camera: these are the lines it writes.</p>
+  </div>
+
+  <div class="out__grid">
+    <div class="screen">
+      <div class="screen__bar"><b>breaker</b><span class="spacer"></span>one call every 20 ms</div>
+<pre class="code" data-lang="moonbit">let b = @moonward.Breaker::new()
+for i in 0L..&lt;500L {
+  let now = i * 20L * 1_000_000L
+  match b.allow(now, roll(i)) {
+    Some(p) if down(now) =&gt; p.fail(now)
+    Some(p) =&gt; p.pass(now)
+    None =&gt; refused += 1
+  }
+}</pre>
+<pre class="out">3500 ms  sent 23  refused  2  ratio 15%
+4000 ms  sent 19  refused  6  ratio 26%
+4500 ms  sent 18  refused  7  ratio 35%
+5000 ms  sent 15  refused 10  ratio 43%
+5500 ms  sent 13  refused 12  ratio 49%
+6000 ms  sent 12  refused 13  ratio 53%
+6500 ms  sent 14  refused 11  ratio 43%
+7000 ms  sent 15  refused 10  ratio 39%</pre>
+    </div>
+
+    <div class="screen">
+      <div class="screen__bar"><b>limiters</b><span class="spacer"></span>two a second, burst of three</div>
+<pre class="code" data-lang="moonbit">let bucket = @moonward.Bucket::new(2.0, burst=3.0)
+let burst = [0, 1, 2, 3]
+  .map(_ =&gt; bucket.take(0L))
+let quota = @moonward.Period::new(2, day,
+  align=true)
+[0, 1, 2].map(_ =&gt; quota.take(0L))</pre>
+<pre class="out">bucket   [true, true, true, false], next in 0.5 s
+period   [Under, Hit, Over]
+gate     true false
+backoff  [0.1, 0.2] s
+deadline false true</pre>
+    </div>
+
+    <div class="screen">
+      <div class="screen__bar"><b>shedder</b><span class="spacer"></span>50 ms calls, cpu at 950‰</div>
+<pre class="code" data-lang="moonbit">let s = @moonward.Shedder::new()
+// one call every millisecond, in flight
+// for 50 ms, then settled
+match s.allow(now, cpu) {
+  Some(t) =&gt;
+    open.push((t, now + 50L * 1_000_000L))
+  None =&gt; refused += 1
+}</pre>
+<pre class="out">in flight 26  refused 960 of 3000</pre>
+    </div>
+  </div>
+</section>
+
+<section class="wall">
+  <div class="shell wall__in">
+    <p class="wall__a mono">No clock read.<br>No dice thrown.</p>
+    <div class="wall__b">
+      <p>A breaker that reads the clock itself can only be tested by waiting, and one that draws its own numbers cannot be tested at all. Here the time is a number you pass and the roll is a number you draw, so an hour of traffic is a loop over <code>now</code>.</p>
+      <div class="wall__acts">
+        <a class="btn" href="guide.html">Build it, step by step</a>
+        <a class="btn btn--ghost" href="bay.html">Turn the knobs</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot shell">
+  <span>moonward 0.2.0</span>
+  <span>Apache-2.0</span>
+  <a href="https://github.com/moonbitstack/moonward">GitHub</a>
+  <a href="https://mooncakes.io/docs/moonbitstack/moonward">mooncakes</a>
+  <span class="spacer"></span>
+  <a href="guide.html">Guide</a>
+  <a href="api.html">API</a>
+  <a href="bay.html">Bay</a>
+</footer>
+
+<script type="module" src="assets/site.js"></script>
+<script type="module" src="assets/home.js"></script>
+</body>
+</html>

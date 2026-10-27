@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API reference — moonward</title>
+<meta name="description" content="Every public type, method and preset in moonward, with parameters, defaults and what each one answers.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/doc.css">
+</head>
+<body>
+
+<div class="hud" aria-hidden="true">
+  <i class="hud__c hud__c--bl"></i>
+  <i class="hud__c hud__c--br"></i>
+  <div class="hud__gauge"><i data-gauge></i></div>
+  <div class="hud__read mono" data-hud-read>000</div>
+</div>
+
+<nav class="rail">
+  <div class="rail__in">
+    <a class="rail__mark" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="M4 20V7l8 9 8-9v13"/><path d="M4 4h16" opacity=".45"/>
+      </svg>
+      <span>moonward</span>
+    </a>
+    <div class="rail__ch">
+      <a href="guide.html"><b>01</b> Guide</a>
+      <a href="api.html" aria-current="page"><b>02</b> API</a>
+      <a href="bay.html"><b>03</b> Bay</a>
+    </div>
+    <a class="rail__git" href="https://github.com/moonbitstack/moonward" aria-label="Repository on GitHub">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+    <span class="rail__ver">v0.2.0</span>
+  </div>
+</nav>
+
+<header class="doc-head shell api-head">
+  <div class="doc-head__meta">
+    <span class="tag">Reference</span>
+    <span class="tag">one package</span>
+    <span class="tag">generated</span>
+  </div>
+  <h1 class="doc-head__title">API<br><em>reference</em></h1>
+  <p class="doc-head__lede">Every public type, method and preset in <code>moonbitstack/moonward</code>. A parameter written <code>name~</code> is labelled with a default: pass it as <code>name=value</code> or leave it out.</p>
+  <div class="api-search">
+    <input id="api-filter" type="search" placeholder="filter — breaker, jitter, window…" autocomplete="off" aria-label="Filter the reference">
+    <span class="api-search__count mono" id="api-count"></span>
+  </div>
+</header>
+
+<div class="hazard"></div>
+
+<div class="doc shell api-doc">
+  <aside class="toc api-index" aria-label="Groups">
+    <div class="toc__in">
+      <p class="toc__t">Groups</p>
+      <ul class="idx">
+<li><a href="#g01"><i>01</i>The breaker</a><ul class="idx__types"><li><a href="#Sre">Sre</a></li><li><a href="#Breaker">Breaker</a></li><li><a href="#Promise">Promise</a></li></ul></li>
+<li><a href="#g02"><i>02</i>Load shedding</a><ul class="idx__types"><li><a href="#Shed">Shed</a></li><li><a href="#Shedder">Shedder</a></li><li><a href="#Ticket">Ticket</a></li></ul></li>
+<li><a href="#g03"><i>03</i>Rate and quota</a><ul class="idx__types"><li><a href="#Bucket">Bucket</a></li><li><a href="#Sliding">Sliding</a></li><li><a href="#Period">Period</a></li><li><a href="#Quota">Quota</a></li></ul></li>
+<li><a href="#g04"><i>04</i>Concurrency</a><ul class="idx__types"><li><a href="#Gate">Gate</a></li></ul></li>
+<li><a href="#g05"><i>05</i>Retry</a><ul class="idx__types"><li><a href="#Backoff">Backoff</a></li><li><a href="#Jitter">Jitter</a></li></ul></li>
+<li><a href="#g06"><i>06</i>Time</a><ul class="idx__types"><li><a href="#Deadline">Deadline</a></li></ul></li>
+<li><a href="#g07"><i>07</i>Windows</a><ul class="idx__types"><li><a href="#Window">Window</a></li><li><a href="#Outcome">Outcome</a></li><li><a href="#Tally">Tally</a></li><li><a href="#Total">Total</a></li></ul></li>
+<li><a href="#gvalues"><i>08</i>Presets</a><ul class="idx__types"><li><a href="#backoff">backoff</a></li><li><a href="#shed">shed</a></li><li><a href="#sre">sre</a></li></ul></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="doc__main" id="api-main">
+<section class="group" id="g01"><h2 class="group__t"><i>01</i>The breaker</h2>
+<article class="api" id="Sre" data-name="sre">
+<header class="api__head">
+  <h3 class="api__name">Sre</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>The constants of probability-based client-side throttling.</p>
+<p>The preset is <a class="ref" href="#sre"><code>sre</code></a>. Build another with <a class="ref" href="#Sre::new"><code>Sre::new</code></a>, or update one in place with <code>{ ..sre, k: 2.0 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>k</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How many calls each success pays for. At 1.5 a backend is left alone until more than a third of its calls fail.</td></tr><tr><td class="pname"><code>floor</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">What <code>k</code> decays to while every bucket at the head of the window is failing, so past successes count for less the longer an outage lasts.</td></tr><tr><td class="pname"><code>protection</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">Calls every backend gets regardless, which keeps a quiet one from throttling itself over two bad calls.</td></tr><tr><td class="pname"><code>probe</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">After this long with nothing let through, one call is let through anyway, so a backend that has recovered is noticed.</td></tr><tr><td class="pname"><code>size</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Buckets in the window.</td></tr><tr><td class="pname"><code>window</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">How far back the window reaches.</td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="Sre-new" data-name="sre::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sre</span>::new(k~ : <span class="ty">Double</span> = sre.k,&#8203; floor~ : <span class="ty">Double</span> = sre.floor,&#8203; protection~ : <span class="ty">Double</span> = sre.protection,&#8203; probe~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = sre.probe,&#8203; size~ : <span class="ty">Int32</span> = sre.size,&#8203; window~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = sre.window) -&gt; <span class="ty">Sre</span></code></div>
+  <div class="fn__doc"><p>A policy by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>k</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">sre.k</code></td><td class="pdoc">how many calls each success pays for; the preset's <code>1.5</code> leaves a backend alone until more than a third of its calls fail</td></tr><tr><td class="pname"><code>floor</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">sre.floor</code></td><td class="pdoc">what <code>k</code> decays to during an outage, <code>1.1</code> in the preset</td></tr><tr><td class="pname"><code>protection</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">sre.protection</code></td><td class="pdoc">calls every backend gets regardless, <code>5</code> in the preset</td></tr><tr><td class="pname"><code>probe</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">sre.probe</code></td><td class="pdoc">how long with nothing let through before one call is let through anyway</td></tr><tr><td class="pname"><code>size</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">sre.size</code></td><td class="pdoc">buckets in the window, <code>40</code> in the preset</td></tr><tr><td class="pname"><code>window</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">sre.window</code></td><td class="pdoc">how far back the window reaches, <code>10 s</code> in the preset</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Breaker" data-name="breaker">
+<header class="api__head">
+  <h3 class="api__name">Breaker</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A circuit breaker that sheds a fraction of calls rather than all of them.</p>
+<p>There is no open, half-open and closed: the breaker keeps a rolling window of outcomes and refuses each new call with a probability that grows with the failures in it. A struggling backend keeps receiving as much as it can still serve, instead of being cut off and then flooded again when it recovers.</p>
+<p>With <code>accepts</code> successes out of <code>total</code> calls in the window, <code>failing</code> the run of all-failure buckets at its head and <code>working</code> the run of all-success ones:</p>
+<pre class="snippet">w     = max(k - (k - floor) × failing / size, floor)
+drop  = (total - protection - w × accepts) / (total + 1)
+drop ×= (size - working) / size</pre>
+<p>A <code>drop</code> at or below zero lets everything through, which is the whole healthy case.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Breaker-allow" data-name="breaker::allow">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Breaker</span>::allow(self : <span class="ty">Breaker</span>,&#8203; now : <span class="ty">Int64</span>,&#8203; roll : <span class="ty">Double</span>) -&gt; <span class="ty">Promise</span>?</code></div>
+  <div class="fn__doc"><p>Ask to make one call at <code>now</code>.</p>
+<p><code>roll</code> is a draw from <code>[0, 1)</code>; the call is refused when it falls under the drop fraction. <code>Some</code> means go ahead, and the caller settles the promise once the call has finished. A refusal is recorded as a <code>Drop</code>, so a breaker that is refusing never reads back as idle and throttles itself off.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>roll</code></td><td class="ptype"><code>Double</code></td><td class="pdef">—</td><td class="pdoc">a draw from <code>[0, 1)</code></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Breaker-new" data-name="breaker::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Breaker</span>::new(sre~ : <span class="ty">Sre</span> = sre,&#8203; now~ : <span class="ty">Int64</span> = 0L) -&gt; <span class="ty">Breaker</span></code></div>
+  <div class="fn__doc"><p>A breaker with an empty window opening at <code>now</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>sre</code><i class="lab">~</i></td><td class="ptype"><code>Sre</code></td><td class="pdef"><code class="dflt">sre</code></td><td class="pdoc">the policy; the <a class="ref" href="#sre"><code>sre</code></a>(#sre) preset by default</td></tr><tr><td class="pname"><code>now</code><i class="lab">~</i></td><td class="ptype"><code>Int64</code></td><td class="pdef"><code class="dflt">0L</code></td><td class="pdoc">the clock reading the window opens at, <code>0L</code> by default</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Breaker-ratio" data-name="breaker::ratio">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Breaker</span>::ratio(self : <span class="ty">Breaker</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Double</span></code></div>
+  <div class="fn__doc"><p>The fraction of calls the breaker would refuse at <code>now</code>, zero while the window is healthy.</p>
+<p>The probe is left out: this is the standing throttle, which is what a dashboard or an alert wants.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Promise" data-name="promise">
+<header class="api__head">
+  <h3 class="api__name">Promise</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A call the breaker let through. Exactly one of <code>pass</code> and <code>fail</code> settles it; until then the window holds no record of how the call went.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Promise-fail" data-name="promise::fail">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Promise</span>::fail(self : <span class="ty">Promise</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call failed.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the clock reading the call finished at</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Promise-pass" data-name="promise::pass">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Promise</span>::pass(self : <span class="ty">Promise</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call succeeded.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the clock reading the call finished at</td></tr></tbody></table>
+</article>
+</div>
+</article>
+</section>
+<section class="group" id="g02"><h2 class="group__t"><i>02</i>Load shedding</h2>
+<article class="api" id="Shed" data-name="shed">
+<header class="api__head">
+  <h3 class="api__name">Shed</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>The constants of adaptive load shedding.</p>
+<p>The preset is <a class="ref" href="#shed"><code>shed</code></a>. Build another with <a class="ref" href="#Shed::new"><code>Shed::new</code></a>, or update one in place with <code>{ ..shed, cpu: 800 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>size</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Buckets in the window the throughput and response times are read from.</td></tr><tr><td class="pname"><code>window</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">How far back that window reaches.</td></tr><tr><td class="pname"><code>cpu</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">CPU use in thousandths at and above which the server counts as overloaded.</td></tr><tr><td class="pname"><code>latency</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">The response time assumed while the window has none, long enough that a server with no history is not shed.</td></tr><tr><td class="pname"><code>beta</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">Weight of the old value in the moving average of calls in flight. Updated only as calls finish, so it lags a surge and admits a little more of it.</td></tr><tr><td class="pname"><code>cool</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">How long the server stays hot after the CPU falls back under the threshold, if it has been shedding.</td></tr><tr><td class="pname"><code>floor</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">The least share of the estimated capacity admitted however high the CPU is.</td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="Shed-new" data-name="shed::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Shed</span>::new(size~ : <span class="ty">Int32</span> = shed.size,&#8203; window~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = shed.window,&#8203; cpu~ : <span class="ty">Int32</span> = shed.cpu,&#8203; latency~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = shed.latency,&#8203; beta~ : <span class="ty">Double</span> = shed.beta,&#8203; cool~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = shed.cool,&#8203; floor~ : <span class="ty">Double</span> = shed.floor) -&gt; <span class="ty">Shed</span></code></div>
+  <div class="fn__doc"><p>A policy by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>size</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">shed.size</code></td><td class="pdoc">buckets in the window, <code>50</code> in the preset</td></tr><tr><td class="pname"><code>window</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">shed.window</code></td><td class="pdoc">how far back that window reaches, <code>5 s</code> in the preset</td></tr><tr><td class="pname"><code>cpu</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">shed.cpu</code></td><td class="pdoc">CPU use in thousandths at or above which the server counts as hot, <code>900</code> in the preset</td></tr><tr><td class="pname"><code>latency</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">shed.latency</code></td><td class="pdoc">response time assumed while the window has none, <code>1 s</code> in the preset</td></tr><tr><td class="pname"><code>beta</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">shed.beta</code></td><td class="pdoc">weight of the old value in the moving average of calls in flight, <code>0.9</code> in the preset</td></tr><tr><td class="pname"><code>cool</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">shed.cool</code></td><td class="pdoc">how long the server stays hot after the CPU falls back, <code>1 s</code> in the preset</td></tr><tr><td class="pname"><code>floor</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">shed.floor</code></td><td class="pdoc">the least share of capacity admitted however high the CPU is, <code>0.1</code> in the preset</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Shedder" data-name="shedder">
+<header class="api__head">
+  <h3 class="api__name">Shedder</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>Load shedding that refuses work only when the server is both hot and full.</p>
+<p>Hot means the CPU is at or over the threshold, or was within the cooling time and the shedder has refused since. Full means more calls are in flight than the server has shown it can finish: the busiest bucket's passes per millisecond times the fastest bucket's mean response time, scaled down as the CPU nears 100%. Both the moving average and the current count of calls in flight must be over that figure.</p>
+<p>A CPU spike with nothing queued sheds nothing, and neither does a queue on an idle CPU. CPU use is read by the caller, in thousandths, and passed to each <a class="ref" href="#Shedder::allow"><code>Shedder::allow</code></a>.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Shedder-allow" data-name="shedder::allow">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Shedder</span>::allow(self : <span class="ty">Shedder</span>,&#8203; now : <span class="ty">Int64</span>,&#8203; cpu : <span class="ty">Int32</span>) -&gt; <span class="ty">Ticket</span>?</code></div>
+  <div class="fn__doc"><p>Ask to start one call at <code>now</code>, with the CPU at <code>cpu</code> thousandths.</p>
+<p><code>Some</code> means go ahead, and the caller settles the ticket once the call has finished.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>cpu</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">CPU use in thousandths, read by the caller</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Shedder-flying" data-name="shedder::flying">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Shedder</span>::flying(self : <span class="ty">Shedder</span>) -&gt; <span class="ty">Int64</span></code></div>
+  <div class="fn__doc"><p>How many calls are in flight.</p></div>
+  
+</article>
+
+<article class="fn" id="Shedder-new" data-name="shedder::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Shedder</span>::new(shed~ : <span class="ty">Shed</span> = shed,&#8203; now~ : <span class="ty">Int64</span> = 0L) -&gt; <span class="ty">Shedder</span></code></div>
+  <div class="fn__doc"><p>A shedder with empty windows opening at <code>now</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>shed</code><i class="lab">~</i></td><td class="ptype"><code>Shed</code></td><td class="pdef"><code class="dflt">shed</code></td><td class="pdoc">the policy; the <a class="ref" href="#shed"><code>shed</code></a>(#shed) preset by default</td></tr><tr><td class="pname"><code>now</code><i class="lab">~</i></td><td class="ptype"><code>Int64</code></td><td class="pdef"><code class="dflt">0L</code></td><td class="pdoc">the clock reading both windows open at, <code>0L</code> by default</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Ticket" data-name="ticket">
+<header class="api__head">
+  <h3 class="api__name">Ticket</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A call the shedder let through. Exactly one of <code>pass</code> and <code>fail</code> settles it.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Ticket-fail" data-name="ticket::fail">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Ticket</span>::fail(self : <span class="ty">Ticket</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call failed. It leaves flight but says nothing about capacity.</p></div>
+  
+</article>
+
+<article class="fn" id="Ticket-pass" data-name="ticket::pass">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Ticket</span>::pass(self : <span class="ty">Ticket</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call succeeded at <code>now</code>. Its response time counts towards what the server has shown it can do.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the clock reading the call finished at; its response time counts towards capacity</td></tr></tbody></table>
+</article>
+</div>
+</article>
+</section>
+<section class="group" id="g03"><h2 class="group__t"><i>03</i>Rate and quota</h2>
+<article class="api" id="Bucket" data-name="bucket">
+<header class="api__head">
+  <h3 class="api__name">Bucket</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A token bucket: <code>rate</code> tokens accrue per second up to <code>burst</code>, and each request takes one.</p>
+<p>It is the rate limiter that allows a burst after a quiet period, which is what a limit on a human-facing API wants — nobody should be refused for making two requests in the same second after an hour of making none.</p>
+<p>Time is nanoseconds from the caller's clock, as everywhere in this package.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Bucket-new" data-name="bucket::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::new(rate : <span class="ty">Double</span>,&#8203; burst~ : <span class="ty">Double</span> = <span class="nu">0.0</span>,&#8203; now~ : <span class="ty">Int64</span> = 0L) -&gt; <span class="ty">Bucket</span></code></div>
+  <div class="fn__doc"><p>A bucket that starts full, which is what lets the first burst through.</p>
+<p><code>rate</code> is tokens per second and <code>burst</code> is the most it will ever hold. A burst smaller than one means nothing ever passes, so it is raised to one.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>rate</code></td><td class="ptype"><code>Double</code></td><td class="pdef">—</td><td class="pdoc">tokens accrued per second</td></tr><tr><td class="pname"><code>burst</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">0.0</code></td><td class="pdoc">the most the bucket will ever hold; with none given, the rate, and never under one</td></tr><tr><td class="pname"><code>now</code><i class="lab">~</i></td><td class="ptype"><code>Int64</code></td><td class="pdef"><code class="dflt">0L</code></td><td class="pdoc">the clock reading the bucket starts at, <code>0L</code> by default</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Bucket-next" data-name="bucket::next">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::next(self : <span class="ty">Bucket</span>,&#8203; now : <span class="ty">Int64</span>,&#8203; n~ : <span class="ty">Double</span> = <span class="nu">1.0</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span></code></div>
+  <div class="fn__doc"><p>How long until <code>n</code> tokens would be available, without taking them.</p>
+<p>Zero when they are available now. This is what a caller sleeps for rather than spinning, and what a <code>Retry-After</code> header is computed from.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>n</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">1.0</code></td><td class="pdoc">how many tokens are wanted, one by default</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Bucket-take" data-name="bucket::take">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::take(self : <span class="ty">Bucket</span>,&#8203; now : <span class="ty">Int64</span>,&#8203; n~ : <span class="ty">Double</span> = <span class="nu">1.0</span>) -&gt; <span class="ty">Bool</span></code></div>
+  <div class="fn__doc"><p>Whether <code>n</code> tokens are available now, taking them if they are.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>n</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">1.0</code></td><td class="pdoc">how many tokens the call costs, one by default</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Bucket-tokens" data-name="bucket::tokens">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::tokens(self : <span class="ty">Bucket</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Double</span></code></div>
+  <div class="fn__doc"><p>How many tokens are in the bucket, for a caller that reports its own headroom.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Sliding" data-name="sliding">
+<header class="api__head">
+  <h3 class="api__name">Sliding</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A sliding window counter: at most <code>quota</code> events in any <code>window</code> long stretch.</p>
+<p>Where a bucket smooths, a window counts. A quota of "a thousand a day" is a window, not a rate, and answering it with a bucket would let a client spend the whole day's allowance in the first minute.</p>
+<p>The stamps of the events in the window are kept, so the count is exact rather than the approximation a two-bucket scheme gives.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Sliding-left" data-name="sliding::left">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sliding</span>::left(self : <span class="ty">Sliding</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>How many events remain in the current window.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Sliding-new" data-name="sliding::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sliding</span>::new(quota : <span class="ty">Int32</span>,&#8203; window : <span class="ty">@moondate.<span class="ty">Span</span></span>) -&gt; <span class="ty">Sliding</span></code></div>
+  <div class="fn__doc"><p>An empty window.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>quota</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">events allowed in any <code>window</code>-long stretch</td></tr><tr><td class="pname"><code>window</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef">—</td><td class="pdoc">the length of that stretch</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Sliding-next" data-name="sliding::next">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sliding</span>::next(self : <span class="ty">Sliding</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span></code></div>
+  <div class="fn__doc"><p>When the window will next have room, which is when its oldest event falls out.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Sliding-take" data-name="sliding::take">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sliding</span>::take(self : <span class="ty">Sliding</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Bool</span></code></div>
+  <div class="fn__doc"><p>Whether an event is within the quota now, counting it if it is.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Period" data-name="period">
+<header class="api__head">
+  <h3 class="api__name">Period</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A fixed window counter: at most <code>quota</code> events per <code>period</code>, the count starting again when a period ends.</p>
+<p>Cheaper than <a class="ref" href="#Sliding"><code>Sliding</code></a>, which keeps every stamp, and coarser: a client can spend one quota at the end of a period and another at the start of the next, so forty events can pass in a second that allows twenty. That is the trade a fixed window makes, and the reason it is the cheap one.</p>
+<p>A period opens on the first event after the last one closed. With <code>align</code> it opens on a multiple of <code>period</code> on the caller's clock instead, so with a Unix clock a daily quota resets at midnight UTC rather than a day after first use.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Period-left" data-name="period::left">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::left(self : <span class="ty">Period</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>How many events remain in the current period.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Period-new" data-name="period::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::new(quota : <span class="ty">Int32</span>,&#8203; period : <span class="ty">@moondate.<span class="ty">Span</span></span>,&#8203; align~ : <span class="ty">Bool</span> = false) -&gt; <span class="ty">Period</span></code></div>
+  <div class="fn__doc"><p>A counter no event has touched. A period shorter than a nanosecond is raised to one.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>quota</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">events allowed per period</td></tr><tr><td class="pname"><code>period</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef">—</td><td class="pdoc">how long a period is; anything under a nanosecond is raised to one</td></tr><tr><td class="pname"><code>align</code><i class="lab">~</i></td><td class="ptype"><code>Bool</code></td><td class="pdef"><code class="dflt">false</code></td><td class="pdoc">open periods on multiples of <code>period</code> on the caller's clock instead of a period after first use</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Period-next" data-name="period::next">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::next(self : <span class="ty">Period</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span></code></div>
+  <div class="fn__doc"><p>How long until the current period ends. Zero when no period is open, because the next event would open one.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Period-take" data-name="period::take">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::take(self : <span class="ty">Period</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Quota</span></code></div>
+  <div class="fn__doc"><p>Count one event at <code>now</code> and say where the quota stands.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Quota" data-name="quota">
+<header class="api__head">
+  <h3 class="api__name">Quota</h3>
+  <span class="chip chip--kind">enum</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>Where a <a class="ref" href="#Period"><code>Period</code></a> stands after an event: under the quota, exactly on it, or past it.</p>
+<p>The event that hits the quota is still admitted. It is told apart because it is the last one, which is when a caller would warn that the next will be refused.</p></div>
+<ul class="variants"><li><code>Under</code></li><li><code>Hit</code></li><li><code>Over</code></li><li><code>} derive(Eq, @debug.Debug)</code></li></ul>
+</article>
+</section>
+<section class="group" id="g04"><h2 class="group__t"><i>04</i>Concurrency</h2>
+<article class="api" id="Gate" data-name="gate">
+<header class="api__head">
+  <h3 class="api__name">Gate</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A count with a ceiling: the concurrency limit a server puts on itself.</p>
+<p>Unlike a rate, this does not depend on time at all — it is how many things are happening at once. A server past its limit answers rather than queues, which is what keeps a queue from becoming the outage.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Gate-enter" data-name="gate::enter">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gate</span>::enter(self : <span class="ty">Gate</span>) -&gt; <span class="ty">Bool</span></code></div>
+  <div class="fn__doc"><p>Whether there is room, taking it if there is.</p></div>
+  
+</article>
+
+<article class="fn" id="Gate-held" data-name="gate::held">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gate</span>::held(self : <span class="ty">Gate</span>) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>How many are inside.</p></div>
+  
+</article>
+
+<article class="fn" id="Gate-leave" data-name="gate::leave">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gate</span>::leave(self : <span class="ty">Gate</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>Give the room back.</p></div>
+  
+</article>
+
+<article class="fn" id="Gate-new" data-name="gate::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gate</span>::new(limit : <span class="ty">Int32</span>) -&gt; <span class="ty">Gate</span></code></div>
+  <div class="fn__doc"><p>A gate that nothing has entered.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>limit</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">how many calls may be inside at once; zero or less means no ceiling</td></tr></tbody></table>
+</article>
+</div>
+</article>
+</section>
+<section class="group" id="g05"><h2 class="group__t"><i>05</i>Retry</h2>
+<article class="api" id="Backoff" data-name="backoff">
+<header class="api__head">
+  <h3 class="api__name">Backoff</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>When to try again, and how long to wait first.</p>
+<p>The preset is <a class="ref" href="#backoff"><code>backoff</code></a>. Build another with <a class="ref" href="#Backoff::new"><code>Backoff::new</code></a>, or update one in place with <code>{ ..backoff, attempts: 5 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>base</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc"></td></tr><tr><td class="pname"><code>factor</code></td><td class="ptype"><code>Double</code></td><td class="pdoc"></td></tr><tr><td class="pname"><code>cap</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc"></td></tr><tr><td class="pname"><code>attempts</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc"></td></tr><tr><td class="pname"><code>jitter</code></td><td class="ptype"><code>Jitter</code></td><td class="pdoc"></td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="Backoff-ceiling" data-name="backoff::ceiling">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Backoff</span>::ceiling(self : <span class="ty">Backoff</span>,&#8203; retry : <span class="ty">Int32</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span></code></div>
+  <div class="fn__doc"><p>The undelayed ceiling before the <code>retry</code>-th retry, the first retry being 1: <code>min(base × factor^(retry-1), cap)</code>.</p>
+<p>This is what a jitter-free client sleeps and what every other strategy draws within, so it is public: a caller comparing this library against a policy written elsewhere compares this.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>retry</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">which retry, the first being one; zero or less returns nothing</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Backoff-delay" data-name="backoff::delay">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Backoff</span>::delay(self : <span class="ty">Backoff</span>,&#8203; retry : <span class="ty">Int32</span>,&#8203; random~ : <span class="ty">Double</span> = <span class="nu">0.0</span>,&#8203; previous~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = <span class="ty">@moondate.<span class="ty">Span</span></span>::new()</code></div>
+  <div class="fn__doc"><p>How long to wait before the <code>retry</code>-th retry.</p>
+<p><code>random</code> is a value in <code>[0, 1)</code> that the caller draws; passing the same one twice gives the same delay twice, which is what makes a retry sequence testable. <code>previous</code> is what the last delay turned out to be, which only <code>Decorrelated</code> reads — it grows from where it landed rather than from the attempt number.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>retry</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">which retry this is, the first being one</td></tr><tr><td class="pname"><code>random</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">0.0</code></td><td class="pdoc">a draw from <code>[0, 1)</code> that the strategy scales; the same draw gives the same wait</td></tr><tr><td class="pname"><code>previous</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">@moondate.Span::new(</code></td><td class="pdoc">what the last wait turned out to be; only <code>Decorrelated</code> reads it</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Backoff-more" data-name="backoff::more">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Backoff</span>::more(self : <span class="ty">Backoff</span>,&#8203; made : <span class="ty">Int32</span>) -&gt; <span class="ty">Bool</span></code></div>
+  <div class="fn__doc"><p>Whether a call that has made <code>made</code> attempts may make another.</p>
+<p>The first attempt is 1, so a policy of three attempts allows two retries.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>made</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">attempts made so far, the first attempt being one</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Backoff-new" data-name="backoff::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Backoff</span>::new(base~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = backoff.base,&#8203; factor~ : <span class="ty">Double</span> = backoff.factor,&#8203; cap~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = backoff.cap,&#8203; attempts~ : <span class="ty">Int32</span> = backoff.attempts,&#8203; jitter~ : <span class="ty">Jitter</span> = backoff.jitter) -&gt; <span class="ty">Backoff</span></code></div>
+  <div class="fn__doc"><p>A backoff by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>base</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">backoff.base</code></td><td class="pdoc">the wait before the first retry, <code>100 ms</code> in the preset</td></tr><tr><td class="pname"><code>factor</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">backoff.factor</code></td><td class="pdoc">what each wait is multiplied by, <code>2.0</code> in the preset</td></tr><tr><td class="pname"><code>cap</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">backoff.cap</code></td><td class="pdoc">the ceiling that multiplication is held to, <code>1 s</code> in the preset</td></tr><tr><td class="pname"><code>attempts</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">backoff.attempts</code></td><td class="pdoc">calls allowed in total, the first one included; <code>3</code> in the preset</td></tr><tr><td class="pname"><code>jitter</code><i class="lab">~</i></td><td class="ptype"><code>Jitter</code></td><td class="pdef"><code class="dflt">backoff.jitter</code></td><td class="pdoc">how much of that schedule is randomised, <code>Spread(0.2)</code> in the preset</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Backoff-schedule" data-name="backoff::schedule">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Backoff</span>::schedule(self : <span class="ty">Backoff</span>,&#8203; randoms~ : <span class="ty">ArrayView</span>[<span class="ty">Double</span>] = [][:]) -&gt; <span class="ty">Array</span>[<span class="ty">@moondate.<span class="ty">Span</span></span>]</code></div>
+  <div class="fn__doc"><p>Every delay a run of retries would wait, for a caller that wants the whole sequence rather than one step — a test, or a log line explaining a plan.</p>
+<p><code>randoms</code> supplies the draws; when it runs short the remaining steps use zero, which is the low end of whatever strategy is in force.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>randoms</code><i class="lab">~</i></td><td class="ptype"><code>ArrayView[Double]</code></td><td class="pdef"><code class="dflt">[][:]</code></td><td class="pdoc">the draws to use, one per retry; when it runs short the rest use zero</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Jitter" data-name="jitter">
+<header class="api__head">
+  <h3 class="api__name">Jitter</h3>
+  <span class="chip chip--kind">enum</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>How much randomness goes into a delay.</p>
+<p>A retry with no jitter makes every client that failed together try again together, which is how one outage becomes a second one. <code>Full</code>, <code>Equal</code> and <code>Decorrelated</code> are the three shapes the literature names and measures; <code>Spread</code> keeps the wait within a fraction of the ceiling instead, which is the easier one to reason about when the schedule is fixed by something else:</p>
+<table class="mtable"><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><code>Rigid</code></td><td>the computed delay, unchanged. Reproducible, and it synchronises clients</td></tr><tr><td><code>Full</code></td><td>uniform over <code>[0, cap]</code>. The one that spreads clients furthest</td></tr><tr><td><code>Equal</code></td><td>half the cap plus uniform over <code>[0, cap/2]</code>. Keeps a floor under the wait</td></tr><tr><td><code>Decorrelated</code></td><td>uniform over <code>[base, previous × 3]</code>. Grows from where it last landed rather than from the attempt number</td></tr><tr><td><code>Spread(f)</code></td><td>uniform over <code>[cap × (1 − f), cap × (1 + f)]</code>, <code>f</code> held to <code>[0, 1]</code>. So the wait can pass the cap by <code>f</code></td></tr></tbody></table></div>
+<ul class="variants"><li><code>Rigid</code></li><li><code>Full</code></li><li><code>Equal</code></li><li><code>Decorrelated</code></li><li><code>Spread(Double)</code></li><li><code>} derive(Eq, @debug.Debug)</code></li></ul>
+</article>
+</section>
+<section class="group" id="g06"><h2 class="group__t"><i>06</i>Time</h2>
+<article class="api" id="Deadline" data-name="deadline">
+<header class="api__head">
+  <h3 class="api__name">Deadline</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A time budget measured from the instant it started.</p>
+<p>A budget of zero or less never expires, which is how most servers spell "no timeout": a configuration that leaves the timeout unset should not time everything out at once.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Deadline-expired" data-name="deadline::expired">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Deadline</span>::expired(self : <span class="ty">Deadline</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Bool</span></code></div>
+  <div class="fn__doc"><p>Whether the budget is spent at <code>now</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Deadline-remaining" data-name="deadline::remaining">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Deadline</span>::remaining(self : <span class="ty">Deadline</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span>?</code></div>
+  <div class="fn__doc"><p>What is left of the budget at <code>now</code>, never negative. <code>None</code> when there is no budget, which has no finite remainder.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Deadline-start" data-name="deadline::start">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Deadline</span>::start(budget : <span class="ty">@moondate.<span class="ty">Span</span></span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Deadline</span></code></div>
+  <div class="fn__doc"><p>A deadline of <code>budget</code> starting at <code>now</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>budget</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef">—</td><td class="pdoc">how long the deadline lasts; zero or less never expires</td></tr><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the clock reading it starts at</td></tr></tbody></table>
+</article>
+</div>
+</article>
+</section>
+<section class="group" id="g07"><h2 class="group__t"><i>07</i>Windows</h2>
+<article class="api" id="Window" data-name="window">
+<header class="api__head">
+  <h3 class="api__name">Window</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A rolling window: <code>size</code> buckets that together cover the last <code>window</code> of time, oldest dropping off as time moves on.</p>
+<p>The bucket type is the caller's. A breaker keeps a <a class="ref" href="#Tally"><code>Tally</code></a> of outcomes per bucket, a shedder a <a class="ref" href="#Total"><code>Total</code></a> of response times; anything with a <code>Default</code> can be a bucket, and the default is what a bucket is cleared back to.</p>
+<p>Time never moves on its own: every call carries the <code>now</code> it happens at. Writing at a later <code>now</code> clears the buckets the gap swept past; reading at a later <code>now</code> skips them without clearing, so a window nobody writes to still ages out, and two reads at the same <code>now</code> agree.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Window-each" data-name="window::each">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">B</span>] <span class="ty">Window</span>::each(self : <span class="ty">Window</span>[<span class="ty">B</span>],&#8203; now : <span class="ty">Int64</span>,&#8203; f : (<span class="ty">B</span>) -&gt; <span class="ty">Unit</span>,&#8203; current~ : <span class="ty">Bool</span> = true) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>Visit the buckets still inside the window at <code>now</code>, oldest first.</p>
+<p>With <code>current</code> false the bucket <code>now</code> falls in is left out: it has seen only part of its time, and a reading that takes the busiest or the fastest bucket should not compare a partial one against whole ones.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>f</code></td><td class="ptype"><code>(B) -&gt; Unit</code></td><td class="pdef">—</td><td class="pdoc">called once per live bucket, oldest first</td></tr><tr><td class="pname"><code>current</code><i class="lab">~</i></td><td class="ptype"><code>Bool</code></td><td class="pdef"><code class="dflt">true</code></td><td class="pdoc">whether to include the bucket <code>now</code> falls in, <code>true</code> by default</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Window-new" data-name="window::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">B</span> : <span class="ty">Default</span>] <span class="ty">Window</span>::new(size~ : <span class="ty">Int32</span>,&#8203; window~ : <span class="ty">@moondate.<span class="ty">Span</span></span>,&#8203; now~ : <span class="ty">Int64</span> = 0L) -&gt; <span class="ty">Window</span>[<span class="ty">B</span>]</code></div>
+  <div class="fn__doc"><p>An empty window of <code>size</code> buckets spanning <code>window</code>, its first bucket opening at <code>now</code>.</p>
+<p>A size below one is raised to one, and so is a bucket narrower than a nanosecond.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>size</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">how many buckets; anything under one is raised to one</td></tr><tr><td class="pname"><code>window</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef">—</td><td class="pdoc">how much time the buckets together cover</td></tr><tr><td class="pname"><code>now</code><i class="lab">~</i></td><td class="ptype"><code>Int64</code></td><td class="pdef"><code class="dflt">0L</code></td><td class="pdoc">the clock reading the first bucket opens at, <code>0L</code> by default</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Window-size" data-name="window::size">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">B</span>] <span class="ty">Window</span>::size(self : <span class="ty">Window</span>[<span class="ty">B</span>]) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>How many buckets the window has.</p></div>
+  
+</article>
+
+<article class="fn" id="Window-slot" data-name="window::slot">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">B</span> : <span class="ty">Default</span>] <span class="ty">Window</span>::slot(self : <span class="ty">Window</span>[<span class="ty">B</span>],&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">B</span></code></div>
+  <div class="fn__doc"><p>The bucket <code>now</code> falls in, for the caller to add to.</p>
+<p>The buckets the gap since the last write swept past are cleared first. The head is snapped back to a bucket boundary, so buckets keep their width rather than drifting with the arrival time of each write.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Window-width" data-name="window::width">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">B</span>] <span class="ty">Window</span>::width(self : <span class="ty">Window</span>[<span class="ty">B</span>]) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span></code></div>
+  <div class="fn__doc"><p>How much time one bucket covers.</p></div>
+  
+</article>
+</div>
+</article>
+<article class="api" id="Outcome" data-name="outcome">
+<header class="api__head">
+  <h3 class="api__name">Outcome</h3>
+  <span class="chip chip--kind">enum</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>How a call ended, as a breaker records it.</p>
+<p>A <code>Drop</code> is a call refused before it ran: traffic, but neither a success nor a failure of whatever is downstream.</p></div>
+<ul class="variants"><li><code>Success</code></li><li><code>Failure</code></li><li><code>Drop</code></li><li><code>} derive(Eq, @debug.Debug)</code></li></ul>
+</article>
+<article class="api" id="Tally" data-name="tally">
+<header class="api__head">
+  <h3 class="api__name">Tally</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Default, Eq</span>
+</header>
+<div class="api__doc"><p>Outcomes counted in one bucket.</p>
+<p><code>total</code> counts every call including the dropped ones, so a bucket being throttled still reads as busy rather than idle.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Tally-add" data-name="tally::add">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Tally</span>::add(self : <span class="ty">Tally</span>,&#8203; o : <span class="ty">Outcome</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>Count one call ending as <code>o</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>o</code></td><td class="ptype"><code>Outcome</code></td><td class="pdef">—</td><td class="pdoc">how the call ended</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Total" data-name="total">
+<header class="api__head">
+  <h3 class="api__name">Total</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Default, Eq</span>
+</header>
+<div class="api__doc"><p>A sum and how many values went into it, which is a mean once <code>count</code> is positive.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Total-add" data-name="total::add">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Total</span>::add(self : <span class="ty">Total</span>,&#8203; v : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>Add one value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>v</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the value to fold into the sum</td></tr></tbody></table>
+</article>
+</div>
+</article>
+</section>
+<section class="group" id="gvalues"><h2 class="group__t"><i>08</i>Presets</h2>
+
+<article class="api api--value" id="sre" data-name="sre">
+  <header class="api__head">
+    <h3 class="api__name">sre</h3>
+    <span class="chip chip--kind">preset</span>
+    <span class="api__derived">let sre : Sre</span>
+  </header>
+  <div class="api__doc"><p>The preset: <code>k</code> 1.5 decaying to 1.1, five calls of protection, a probe every second, and ten seconds of history in forty buckets.</p>
+<p><code>k</code> and <code>protection</code> are the slope and the floor of the standard client-side throttling formula; the decay, the probe and the recovery scaling are what keep a long outage from hurting past successes, and a short one from being remembered for long.</p></div>
+</article>
+
+<article class="api api--value" id="shed" data-name="shed">
+  <header class="api__head">
+    <h3 class="api__name">shed</h3>
+    <span class="chip chip--kind">preset</span>
+    <span class="api__derived">let shed : Shed</span>
+  </header>
+  <div class="api__doc"><p>The preset: five seconds in fifty buckets, overloaded at 90% CPU, a one-second assumed response time, an average weighted 0.9, one second to cool and never less than a tenth of capacity.</p>
+<p>A five-second memory, a threshold at ninety percent, and a floor under the share of capacity admitted: the values that make a server shed only when it is genuinely out of room.</p></div>
+</article>
+
+<article class="api api--value" id="backoff" data-name="backoff">
+  <header class="api__head">
+    <h3 class="api__name">backoff</h3>
+    <span class="chip chip--kind">preset</span>
+    <span class="api__derived">let backoff : Backoff</span>
+  </header>
+  <div class="api__doc"><p>The preset: three attempts, a hundred milliseconds doubling to a one-second ceiling, spread by a fifth either way.</p>
+<p>The schedule is a hundred milliseconds doubling to a one-second ceiling, and the spread keeps each wait within a fifth below or above that: a plan <code>0.8</code> to <code>1.2</code> of the computed ceiling, which is easy to explain to whoever asks why the second retry waited 168 ms.</p></div>
+</article>
+</section>
+  </main>
+</div>
+
+<footer class="foot shell">
+  <span>moonward 0.2.0</span>
+  <span>Apache-2.0</span>
+  <a href="https://github.com/moonbitstack/moonward">GitHub</a>
+  <a href="https://mooncakes.io/docs/moonbitstack/moonward">mooncakes</a>
+  <span class="spacer"></span>
+  <a href="index.html">Home</a>
+  <a href="guide.html">Guide</a>
+  <a href="bay.html">Bay</a>
+</footer>
+
+<script type="module" src="assets/site.js"></script>
+<script type="module" src="assets/api.js"></script>
+</body>
+</html>

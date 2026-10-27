@@ -1,0 +1,697 @@
+/* ==========================================================================
+   moonward — one stylesheet for four pages
+   Light is the workshop: enamel panels, ink, a furnace-orange signal.
+   Dark is the night bay: the same machine with the lights off.
+   ========================================================================== */
+
+:root {
+  --bg: #dcd8cd;
+  --plate: #f1eee6;
+  --plate-2: #e6e2d7;
+  --plate-3: #d4d0c4;
+  --ink: #121417;
+  --dim: #5d6268;
+  --faint: #8b8f93;
+  --line: #bdb9ac;
+  --line-soft: #cfcbc0;
+  --hot: #c8410c;
+  --hot-soft: #f0d8c8;
+  --sig: #0f6f52;
+  --sig-soft: #cfe0d6;
+  --screen: #0d0f11;
+  --screen-2: #141719;
+  --screen-ink: #ded9cd;
+  --screen-dim: #7d848a;
+  --screen-line: #262b2f;
+  --amber: #d98a00;
+  --screw: #8d8a80;
+  --shadow: 0 1px 0 #ffffff80, 0 1px 2px #00000012;
+  --chamfer: 14px;
+  --gut: 26px;
+  --max: 1260px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0b0d;
+    --plate: #121417;
+    --plate-2: #181b1f;
+    --plate-3: #22262b;
+    --ink: #e8e4d9;
+    --dim: #8f959c;
+    --faint: #666c73;
+    --line: #262a30;
+    --line-soft: #1c2024;
+    --hot: #ff6a1f;
+    --hot-soft: #38200f;
+    --sig: #35d99a;
+    --sig-soft: #10312a;
+    --screen: #08090a;
+    --screen-2: #101315;
+    --screen-ink: #ded9cd;
+    --screen-dim: #767d84;
+    --screen-line: #22272b;
+    --amber: #f0a41c;
+    --screw: #3a4046;
+    --shadow: 0 1px 0 #ffffff0a, 0 2px 10px #00000060;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scrollbar-color: var(--hot) var(--plate-2);
+  scrollbar-width: thin;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-color: var(--hot) var(--plate-2);
+    scrollbar-width: thin;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--plate-2);
+  border-left: 1px solid var(--line);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border: 3px solid var(--plate-2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hot);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--plate-2);
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--line) 34%, transparent) 0 1px,
+      transparent 1px 100%
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--line) 34%, transparent) 0 1px,
+      transparent 1px 100%
+    );
+  background-size: 64px 64px, 64px 64px;
+  color: var(--ink);
+  font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+samp,
+code,
+kbd,
+pre {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-ligatures: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Big Shoulders Display", Archivo, sans-serif;
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--hot);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 3px;
+}
+
+/* --- small pieces ------------------------------------------------------- */
+
+.tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.tag--hot {
+  color: var(--hot);
+}
+
+.tag--sig {
+  color: var(--sig);
+}
+
+.mono {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.hazard {
+  height: 5px;
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in oklab, var(--hot) 78%, transparent) 0 5px,
+    transparent 5px 11px
+  );
+  opacity: 0.55;
+}
+
+.plate {
+  position: relative;
+  background: var(--plate);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.screws::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, var(--screw) 0 1.6px, transparent 2px),
+    radial-gradient(circle, var(--screw) 0 1.6px, transparent 2px),
+    radial-gradient(circle, var(--screw) 0 1.6px, transparent 2px),
+    radial-gradient(circle, var(--screw) 0 1.6px, transparent 2px);
+  background-repeat: no-repeat;
+  background-position:
+    left top,
+    right top,
+    left bottom,
+    right bottom;
+  opacity: 0.75;
+}
+
+.led {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: var(--sig);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--sig) 40%, transparent);
+}
+
+.led--hot {
+  background: var(--hot);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--hot) 40%, transparent);
+}
+
+.led--pulse {
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* --- shell -------------------------------------------------------------- */
+
+.shell {
+  width: min(100% - var(--gut) * 2, var(--max));
+  margin-inline: auto;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: color-mix(in oklab, var(--bg) 88%, var(--plate));
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+}
+
+.rail__in {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  height: 58px;
+  width: min(100% - var(--gut) * 2, var(--max));
+  margin-inline: auto;
+}
+
+.rail__mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-inline: 2px 18px;
+  border-right: 1px solid var(--line);
+  font-family: "Big Shoulders Display", sans-serif;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.rail__mark svg {
+  width: 18px;
+  height: 18px;
+  color: var(--hot);
+}
+
+.rail__mark span {
+  line-height: 1;
+}
+
+.rail__ch {
+  display: flex;
+  align-items: stretch;
+  margin-left: auto;
+}
+
+.rail__ch a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 16px;
+  border-left: 1px solid var(--line-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.rail__ch a b {
+  font-weight: 500;
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.rail__ch a:hover {
+  color: var(--ink);
+  background: var(--plate-2);
+}
+
+.rail__ch a[aria-current="page"] {
+  color: var(--ink);
+  background: var(--plate);
+}
+
+.rail__ch a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--hot);
+}
+
+.rail__git {
+  display: flex;
+  align-items: center;
+  padding-inline: 14px;
+  border-left: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.rail__git svg {
+  width: 17px;
+  height: 17px;
+}
+
+.rail__git:hover {
+  background: var(--hot);
+  color: #fff;
+}
+
+.rail__ver {
+  display: flex;
+  align-items: center;
+  padding-inline: 12px 2px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  color: var(--faint);
+  letter-spacing: 0.06em;
+}
+
+/* --- buttons ------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px 11px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 0.12s var(--ease),
+    background 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+
+.btn:hover {
+  background: var(--hot);
+  border-color: var(--hot);
+  color: #fff;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.btn--ghost:hover {
+  background: var(--plate-2);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.btn--sm {
+  padding: 8px 12px 7px;
+  font-size: 10px;
+}
+
+/* --- screens (code and terminals live on dark glass in both themes) ----- */
+
+.screen {
+  position: relative;
+  background: var(--screen);
+  border: 1px solid #000;
+  color: var(--screen-ink);
+  box-shadow:
+    inset 0 0 0 1px #ffffff08,
+    0 1px 0 #ffffff40;
+}
+
+.screen__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--screen-line);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--screen-dim);
+  background: var(--screen-2);
+}
+
+.screen__bar b {
+  color: var(--screen-ink);
+  font-weight: 500;
+}
+
+.screen__bar .spacer {
+  margin-left: auto;
+}
+
+pre.code,
+pre.out {
+  margin: 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.75;
+  tab-size: 2;
+  color: var(--screen-ink);
+}
+
+pre.code {
+  white-space: pre;
+}
+
+pre.out {
+  white-space: pre;
+  color: #a9d6bd;
+  background: #00000040;
+  border-top: 1px dashed var(--screen-line);
+}
+
+pre.out::-webkit-scrollbar,
+pre.code::-webkit-scrollbar {
+  height: 8px;
+}
+
+pre.out::-webkit-scrollbar-thumb,
+pre.code::-webkit-scrollbar-thumb {
+  background: #394044;
+  border: 2px solid var(--screen);
+}
+
+.cm {
+  color: #5f6b63;
+}
+
+.kw {
+  color: #ff8f5e;
+}
+
+.ty {
+  color: #8ec9e8;
+}
+
+.st {
+  color: #b7d98a;
+}
+
+.nu {
+  color: #e0b48a;
+}
+
+.fn {
+  color: #e8e2d2;
+}
+
+/* --- page head ---------------------------------------------------------- */
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--hot);
+}
+
+.lede {
+  font-size: clamp(15px, 1.4vw, 17.5px);
+  line-height: 1.62;
+  color: var(--dim);
+  max-width: 46ch;
+}
+
+/* --- hud frame ---------------------------------------------------------- */
+
+.hud__gauge {
+  position: fixed;
+  inset: 70px 7px 70px auto;
+  width: 2px;
+  background: var(--line-soft);
+  z-index: 40;
+  pointer-events: none;
+}
+
+.hud__gauge i {
+  display: block;
+  width: 100%;
+  height: 0;
+  background: var(--hot);
+  transform-origin: top;
+}
+
+.hud__read {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: 40;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+  pointer-events: none;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.hud__c {
+  position: fixed;
+  width: 16px;
+  height: 16px;
+  z-index: 40;
+  pointer-events: none;
+  border-color: var(--line);
+  border-style: solid;
+  border-width: 0;
+}
+
+.hud__c--br {
+  right: 16px;
+  bottom: 16px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+
+.hud__c--bl {
+  left: 16px;
+  bottom: 16px;
+  border-left-width: 1px;
+  border-bottom-width: 1px;
+}
+
+@media (width <= 860px) {
+  .hud {
+    display: none;
+  }
+}
+
+/* --- footer ------------------------------------------------------------- */
+
+.foot {
+  border-top: 1px solid var(--line);
+  margin-top: 72px;
+  padding-block: 26px 34px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  align-items: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.foot a:hover {
+  color: var(--hot);
+}
+
+.foot .spacer {
+  margin-left: auto;
+}
+
+@media (width <= 860px) {
+  :root {
+    --gut: 16px;
+  }
+
+  .rail {
+    position: fixed;
+    inset: auto 0 0 0;
+    top: auto;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+    background: color-mix(in oklab, var(--bg) 94%, var(--plate));
+  }
+
+  .rail__in {
+    height: 56px;
+  }
+
+  .rail__mark,
+  .rail__ver,
+  .rail__ch a b {
+    display: none;
+  }
+
+  .rail__ch {
+    flex: 1;
+    margin-left: 0;
+  }
+
+  .rail__ch a {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 4px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    border-left: 1px solid var(--line-soft);
+  }
+
+  .rail__ch a:first-child {
+    border-left: 0;
+  }
+
+  .rail__git {
+    padding-inline: 12px;
+    border-left: 1px solid var(--line);
+  }
+
+  body {
+    padding-bottom: 56px;
+  }
+
+  .foot {
+    padding-bottom: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

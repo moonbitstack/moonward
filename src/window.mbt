@@ -26,6 +26,11 @@ pub struct Window[B] {
 ///
 /// A size below one is raised to one, and so is a bucket narrower than a
 /// nanosecond.
+///
+/// # Parameters
+/// - `size` : how many buckets; anything under one is raised to one
+/// - `window` : how much time the buckets together cover
+/// - `now` : the clock reading the first bucket opens at, `0L` by default
 pub fn[B : Default] Window::new(
   size~ : Int32,
   window~ : @moondate.Span,
@@ -79,6 +84,9 @@ fn[B] Window::span(self : Window[B], now : Int64) -> Int32 {
 /// The buckets the gap since the last write swept past are cleared first. The
 /// head is snapped back to a bucket boundary, so buckets keep their width rather
 /// than drifting with the arrival time of each write.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
 pub fn[B : Default] Window::slot(self : Window[B], now : Int64) -> B {
   let span = self.span(now)
   if span > 0 {
@@ -97,8 +105,12 @@ pub fn[B : Default] Window::slot(self : Window[B], now : Int64) -> B {
 ///
 /// With `current` false the bucket `now` falls in is left out: it has seen only
 /// part of its time, and a reading that takes the busiest or the fastest bucket
-/// should not compare a partial one against whole ones. go-zero's shedder reads
-/// its windows this way.
+/// should not compare a partial one against whole ones.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
+/// - `f` : called once per live bucket, oldest first
+/// - `current` : whether to include the bucket `now` falls in, `true` by default
 pub fn[B] Window::each(
   self : Window[B],
   now : Int64,
@@ -154,6 +166,9 @@ pub extend Tally with Eq::{not_equal, equal}
 
 ///|
 /// Count one call ending as `o`.
+///
+/// # Parameters
+/// - `o` : how the call ended
 pub fn Tally::add(self : Tally, o : Outcome) -> Unit {
   self.total += 1L
   match o {
@@ -182,6 +197,9 @@ pub extend Total with Eq::{not_equal, equal}
 
 ///|
 /// Add one value.
+///
+/// # Parameters
+/// - `v` : the value to fold into the sum
 pub fn Total::add(self : Total, v : Int64) -> Unit {
   self.sum += v
   self.count += 1L

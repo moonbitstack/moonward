@@ -6,9 +6,9 @@
 ///
 /// A retry with no jitter makes every client that failed together try again
 /// together, which is how one outage becomes a second one. `Full`, `Equal` and
-/// `Decorrelated` are the strategies AWS's "Exponential Backoff and Jitter"
-/// measures; `Spread` is the randomisation factor of Google's client libraries and
-/// the one gRPC retries with:
+/// `Decorrelated` are the three shapes the literature names and measures;
+/// `Spread` keeps the wait within a fraction of the ceiling instead, which is the
+/// easier one to reason about when the schedule is fixed by something else:
 ///
 /// | | |
 /// |:--:|:--|
@@ -54,10 +54,10 @@ pub extend Backoff with Eq::{not_equal, equal}
 /// The preset: three attempts, a hundred milliseconds doubling to a one-second
 /// ceiling, spread by a fifth either way.
 ///
-/// The schedule is the retry policy gRPC's proposal A6 prints — `initialBackoff`
-/// 0.1s, `maxBackoff` 1s, `backoffMultiplier` 2 — and the spread is the
-/// `random(0.8, 1.2)` it applies, which grpc-go and grpc-java both draw. Three
-/// attempts is the default of the AWS SDKs' standard retry mode.
+/// The schedule is a hundred milliseconds doubling to a one-second ceiling, and
+/// the spread keeps each wait within a fifth below or above that: a plan
+/// `0.8` to `1.2` of the computed ceiling, which is easy to explain to whoever
+/// asks why the second retry waited 168 ms.
 pub let backoff : Backoff = {
   base: @moondate.Span::new(millis=100L),
   factor: 2.0,
@@ -68,6 +68,13 @@ pub let backoff : Backoff = {
 
 ///|
 /// A backoff by name, every knob with the preset's value.
+///
+/// # Parameters
+/// - `base` : the wait before the first retry, `100 ms` in the preset
+/// - `factor` : what each wait is multiplied by, `2.0` in the preset
+/// - `cap` : the ceiling that multiplication is held to, `1 s` in the preset
+/// - `attempts` : calls allowed in total, the first one included; `3` in the preset
+/// - `jitter` : how much of that schedule is randomised, `Spread(0.2)` in the preset
 pub fn Backoff::new(
   base~ : @moondate.Span = backoff.base,
   factor~ : Double = backoff.factor,
@@ -82,6 +89,9 @@ pub fn Backoff::new(
 /// Whether a call that has made `made` attempts may make another.
 ///
 /// The first attempt is 1, so a policy of three attempts allows two retries.
+///
+/// # Parameters
+/// - `made` : attempts made so far, the first attempt being one
 pub fn Backoff::more(self : Backoff, made : Int32) -> Bool {
   made < self.attempts && made >= 0
 }
@@ -93,6 +103,9 @@ pub fn Backoff::more(self : Backoff, made : Int32) -> Bool {
 /// This is what a jitter-free client sleeps and what every other strategy draws
 /// within, so it is public: a caller comparing this library against a policy
 /// written elsewhere compares this.
+///
+/// # Parameters
+/// - `retry` : which retry, the first being one; zero or less returns nothing
 pub fn Backoff::ceiling(self : Backoff, retry : Int32) -> @moondate.Span {
   if retry < 1 {
     return @moondate.Span::new()
@@ -118,6 +131,11 @@ pub fn Backoff::ceiling(self : Backoff, retry : Int32) -> @moondate.Span {
 /// twice gives the same delay twice, which is what makes a retry sequence testable.
 /// `previous` is what the last delay turned out to be, which only `Decorrelated`
 /// reads — it grows from where it landed rather than from the attempt number.
+///
+/// # Parameters
+/// - `retry` : which retry this is, the first being one
+/// - `random` : a draw from `[0, 1)` that the strategy scales; the same draw gives the same wait
+/// - `previous` : what the last wait turned out to be; only `Decorrelated` reads it
 pub fn Backoff::delay(
   self : Backoff,
   retry : Int32,
@@ -160,6 +178,9 @@ pub fn Backoff::delay(
 ///
 /// `randoms` supplies the draws; when it runs short the remaining steps use zero,
 /// which is the low end of whatever strategy is in force.
+///
+/// # Parameters
+/// - `randoms` : the draws to use, one per retry; when it runs short the rest use zero
 pub fn Backoff::schedule(
   self : Backoff,
   randoms~ : ArrayView[Double] = [][:],

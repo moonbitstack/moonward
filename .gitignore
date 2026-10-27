@@ -3,3 +3,6 @@
 !.moonignore
 _*
 target/
+
+# built from src/demo by .github/workflows/docs.yml, never committed
+docs/assets/moonward.js

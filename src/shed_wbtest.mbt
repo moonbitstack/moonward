@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 ///|
-/// go-zero's test shape: ten buckets of 100 ms, so a pass per bucket is 0.01 per
+/// The shape the model is easiest to check in: ten buckets of 100 ms, so a pass per bucket is 0.01 per
 /// millisecond, its `windowFactor`.
 fn shedder() -> Shedder {
   Shedder::new(shed={
@@ -14,7 +14,7 @@ fn shedder() -> Shedder {
 
 ///|
 /// Bucket `i` gets `(i + 1) × 100` passes and the response times `10i + 1` to
-/// `10i + 10` milliseconds, which is the history go-zero's tests build. Returns
+/// `10i + 10` milliseconds, which is the history these tests build. Returns
 /// the instant the last bucket was written at.
 fn history(s : Shedder) -> Int64 {
   for i in 0L..<10L {
@@ -123,7 +123,7 @@ test "settling a ticket records the response time and moves the average" {
   guard s.allow(0L, 0) is Some(a) else { fail("refused on an idle server") }
   guard s.allow(0L, 0) is Some(b) else { fail("refused on an idle server") }
   assert_eq(s.flying(), 2L)
-  // 2.4 ms rounds up to 3, as go-zero rounds it
+  // 2.4 ms rounds up to 3
   a.pass(2_400_000L)
   assert_eq(s.flying(), 1L)
   assert_eq(s.average, 1.0 * (1.0 - 0.9))

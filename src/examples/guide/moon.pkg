@@ -1,0 +1,8 @@
+// The guide, in order, as one program: `moon run src/examples/guide`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonward",
+  "moonbitstack/moondate",
+  "moonbitlang/core/debug",
+}

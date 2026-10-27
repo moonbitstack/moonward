@@ -1,0 +1,10 @@
+// The site's panel engine: the steps the interactive chapters run, as JSON.
+// Built for JavaScript only — it is not part of the library.
+pkgtype(kind: "executable")
+
+supported_targets = "js"
+
+import {
+  "moonbitstack/moonward",
+  "moonbitstack/moondate",
+}

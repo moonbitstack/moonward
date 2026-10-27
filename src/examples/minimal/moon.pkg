@@ -1,0 +1,6 @@
+// The smallest working breaker: `moon run src/examples/minimal`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonward",
+}

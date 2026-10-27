@@ -1,81 +1,111 @@
-# moonward
+<div align="center">
 
-Resilience for MoonBit without I/O: a circuit breaker, adaptive load shedding, rate limits, quotas, concurrency limits, backoff and deadlines. Every decision is a function of what the caller passes in, so every sequence is reproducible in a test.
+<h1>moonward</h1>
 
-```moonbit
-let now = 0L // the caller's clock, in nanoseconds
-let breaker = @moonward.Breaker::new()
-match breaker.allow(now, 0.42) {
-  Some(call) => call.pass(now + 30_000_000L) // or call.fail(...)
-  None => println("backend refused")
-}
-let shedder = @moonward.Shedder::new()
-match shedder.allow(now, 400) {
-  Some(ticket) => ticket.pass(now + 30_000_000L) // or ticket.fail()
-  None => println("overloaded")
-}
-let daily = @moonward.Period::new(1000, @moondate.Span::new(days=1L), align=true)
-let quota = daily.take(now) // Under
-let rate = @moonward.Bucket::new(100.0, burst=200.0).take(now) // true
-let wait = @moonward.backoff.delay(2, random=0.5) // 100 ms
-```
+<p><b>Resilience without I/O.</b><br>
+A circuit breaker, adaptive load shedding, four limiters, backoff and a deadline.<br>
+Every decision is a function of the numbers you pass in, so every sequence is reproducible.</p>
 
-`moon run src/examples/tour` puts a failing backend behind a breaker, overloads a server behind a shedder and steps once through each limiter.
+<p>
+<a href="https://moonbitstack.github.io/moonward/"><b>site</b></a> &nbsp;·&nbsp;
+<a href="https://moonbitstack.github.io/moonward/guide.html"><b>guide</b></a> &nbsp;·&nbsp;
+<a href="https://moonbitstack.github.io/moonward/api.html"><b>API</b></a> &nbsp;·&nbsp;
+<a href="https://moonbitstack.github.io/moonward/bay.html"><b>the bay</b></a> &nbsp;·&nbsp;
+<a href="https://mooncakes.io/docs/moonbitstack/moonward"><b>mooncakes</b></a>
+</p>
+
+</div>
+
+---
+
+## What it is
+
+Nine types that answer one question each: should this call go ahead.
+
+|  | Answers | Refuses when |
+|:--|:--|:--|
+| **`Breaker`** | Is this backend likely to work? | a draw falls under a refusal fraction built from the last ten seconds of outcomes |
+| **`Shedder`** | Should this server take on another call? | the CPU is over its threshold **and** more calls are in flight than the server has shown it can finish |
+| **`Bucket`** | Is this call within a rate? | the token is spent; `next` says when the next one lands |
+| **`Sliding`** | Is it within a quota over any window-long stretch? | the count reaches the quota |
+| **`Period`** | Is it within a quota this period? | the count for the open period is spent |
+| **`Gate`** | Is there room right now? | `held` has reached `limit` — it never asks what time it is |
+| **`Backoff`** | When to try again, and how long first? | `more(attempts)` is false |
+| **`Deadline`** | How much of the budget is left? | `expired` is true |
+| **`Window`** | What does the rolling window hold? | never; it is the array of buckets the others read |
 
 ## No clock, no dice
 
-Nothing here reads a clock or draws a random number. `now` is whatever the caller's clock read, in nanoseconds; where a decision is a roll, the caller passes a draw from `[0, 1)`; where it depends on CPU, the caller passes the reading in thousandths. Durations are `@moondate.Span`.
+Nothing here reads a clock or draws a random number. `now` is whatever your clock read, in nanoseconds; where a decision is a roll, you pass a draw from `[0, 1)`. That is what makes an hour of traffic a loop over `now`, and a retry sequence testable.
 
-A breaker that read the clock itself could only be tested by waiting, and one that drew its own numbers could not be tested at all. Passing both in turns an hour of traffic into a loop over `now`.
-
-## The pieces
-
-|  | What it answers |
-|:--:|:--|
-| `Breaker` | Whether to call a backend that has been failing, as a probability rather than a switch |
-| `Shedder` | Whether this server should take on another call |
-| `Bucket` | Whether a call is within a rate, and how long until one would be |
-| `Sliding` | Whether it is within a quota counted over any window-long stretch |
-| `Period` | The same quota counted per fixed period, cheaper and coarser |
-| `Gate` | Whether there is room right now, which has nothing to do with time |
-| `Backoff` | How long to wait before trying again, and whether to |
-| `Deadline` | How much of a time budget is left |
-| `Window[B]` | The rolling window the breaker and the shedder read; any type with a `Default` can be its bucket |
+```moonbit
+let breaker = @moonward.Breaker::new()
+let now = 0L
+match breaker.allow(now, 0.42) {
+  Some(call) => call.pass(now)   // or call.fail(now)
+  None => println("refused")
+}
+```
 
 ## The breaker
 
-There is no open, half-open and closed. The breaker keeps ten seconds of outcomes and refuses each call with a probability that grows with the failures, so a struggling backend keeps receiving what it can still serve instead of being cut off and then flooded again on recovery. With `accepts` successes out of `total` calls, `failing` the run of all-failure buckets at the head of the window and `working` the run of all-success ones:
+There is no open, half-open and closed. The breaker keeps ten seconds of outcomes and refuses each call with a probability that grows with the failures in it, so a struggling backend keeps receiving what it can still serve instead of being cut off and then flooded on recovery.
 
-$$ w = \max\left(k - (k - floor) \cdot \frac{failing}{size},\ floor\right) $$
+```text
+w     = max( k − (k − floor) · failing / size , floor )
+drop  = ( total − protection − w · accepts ) / ( total + 1 )
+drop ×= ( size − working ) / size
+```
 
-$$ drop = \frac{total - protection - w \cdot accepts}{total + 1} \cdot \frac{size - working}{size} $$
-
-With `failing` and `working` at zero this is equation 21-1 of the Google SRE book, *Handling Overload*. The decay of `k`, the recovery factor and the probe that lets one call through after a silent second are go-zero's, from `core/breaker/googlebreaker.go`. A refused call is recorded too, so a breaker that is refusing never reads back as idle.
+`failing` and `working` are runs at the head of the window, not totals. A success pays for `k` calls — at the preset's 1.5, a backend is left alone until more than a third of its calls fail.
 
 ## The shedder
 
-A call is refused only when the server is both hot and full, which is go-zero's `core/load/adaptiveshedder.go`:
+A call is refused only when the server is both **hot** and **full**:
 
-- **hot**: the CPU is at or over the threshold, or was within the last second and the shedder has refused since;
-- **full**: both the moving average and the current count of calls in flight exceed what the server has shown it can carry, the busiest bucket's passes per millisecond times the fastest bucket's mean response time, scaled down as the CPU nears 100% but never under a tenth.
+- **hot** — the CPU is at or over the threshold, or was within the last second and the shedder has refused since;
+- **full** — both the moving average and the current count of calls in flight exceed the busiest bucket's passes per millisecond times the fastest bucket's mean response time, scaled down as the CPU nears 100% but never under a tenth.
 
-A CPU spike with nothing queued refuses nothing, and neither does a queue on an idle CPU.
+A CPU spike with nothing queued refuses nothing, and neither does a long queue on an idle CPU. CPU use is read by you, in thousandths, and passed to each `allow`.
 
-## Where they run
+## A run
 
-[moonpool](https://github.com/moonbitstack/moonpool) puts a breaker, a bucket, a backoff and a shedder in front of a resource pool as a `Ward`, so a pool stops connecting to a failing backend and spaces out its reconnections; moondb's connection pool takes the same ward. [moonzero](https://github.com/moonbitstack/moonzero) runs go-zero's breaker, shedder, limiters and timeout middleware on these parts, with go-zero's millisecond clock on the outside.
+`moon run src/examples/limiters` offers one burst of forty calls every two seconds to a bucket, a sliding window and a period, all with a quota of twenty a second. The burst straddles the second boundary:
 
-## Configuration
+```text
+burst  bucket  sliding  period
+    0      21       20      40
+    1      21       20      40
+    2      21       20      40
+    3      21       20      40
 
-The breaker and the shedder each take one policy record, with a preset of the same name: `Breaker::new(sre=...)`, `Shedder::new(shed=...)`. A policy is built with `Sre::new(k=2.0)`, or from the preset with `{ ..sre, k: 2.0 }`; the two are the same value. There are no per-call overrides, so there is nothing to rank.
+five tokens in 200 ms
+```
 
-| Preset | Values | Source |
-|:--:|:--|:--|
-| `sre` | `k` 1.5 decaying to 1.1, protection 5, probe after 1 s, 40 buckets over 10 s | go-zero `googlebreaker.go` |
-| `shed` | 50 buckets over 5 s, CPU threshold 900‰, 1 s assumed response time, average weight 0.9, 1 s to cool, never under 0.1 of capacity | go-zero `adaptiveshedder.go` |
-| `backoff` | 3 attempts, 100 ms doubling to 1 s, a fifth either way | gRPC proposal A6 for the schedule and spread, as grpc-go and grpc-java draw it; the AWS SDKs' standard mode for the attempts |
+The bucket spends a saved burst and then holds the rate. The slide refuses the twenty-first call in any one-second stretch. The period starts a fresh twenty when the second turns over, so the same burst is counted as twenty on each side and all forty pass.
 
-`Period` resets a day after first use unless `align` is set, which is go-zero's `PeriodLimit` default. A `Deadline` with a budget of zero or less never expires, which is how go-zero and gRPC spell no timeout.
+## Presets
+
+Each policy is a record with a preset of the same name. Copy it and change one field — `{ ..sre, k: 2.0 }` — or build it with `Sre::new(k=2.0)`. There are no per-call overrides.
+
+| Preset | Values |
+|:--|:--|
+| `sre` | `k` 1.5 decaying to 1.1, protection 5, a probe after 1 s, 40 buckets over 10 s |
+| `shed` | 50 buckets over 5 s, CPU threshold 900‰, 1 s assumed response time, average weighted 0.9, 1 s to cool, never under 0.1 of capacity |
+| `backoff` | 3 attempts, 100 ms doubling to a 1 s cap, each wait spread by a fifth either way |
+
+Durations are `@moondate.Span`, so the package brings `moondate` with it.
+
+## Examples
+
+| Program | What it shows |
+|:--|:--|
+| [`src/examples/minimal`](src/examples/minimal/main.mbt) | one breaker, one failing backend, four lines of output — the smallest thing that works |
+| [`src/examples/limiters`](src/examples/limiters/main.mbt) | the same bursty traffic through all three quotas |
+| [`src/examples/tour`](src/examples/tour/main.mbt) | a breaker under an outage, a shedder under rising load, one step through each limiter |
+| [`src/examples/guide`](src/examples/guide/main.mbt) | the guide as one program, in the order you read it |
+
+The [bay](https://moonbitstack.github.io/moonward/bay.html) runs the same code compiled to JavaScript, with the knobs on the outside.
 
 ## Licence
 

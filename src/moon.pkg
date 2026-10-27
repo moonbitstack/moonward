@@ -2,14 +2,15 @@
 // backoff, rolling windows and deadlines.
 //
 // Every decision is a function of what the caller passes in. The clock is read by
-// the caller (nanoseconds, as in moonpool) and so is the randomness a breaker's
-// roll or backoff's jitter needs, which is what makes every sequence here
-// reproducible in a test. Policy numbers are parameters whose presets are the
-// values go-zero ships.
+// the caller, in nanoseconds, and so is the randomness a breaker's roll or a
+// backoff's jitter needs, which is what makes every sequence here reproducible in
+// a test. Policy numbers are parameters, each with a preset that is a reasonable
+// place to start.
 //
-// The jitter strategies are the ones AWS's "Exponential Backoff and Jitter"
-// (https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
-// names and measures.
+// Five jitter strategies ship: rigid, full, equal, decorrelated and spread. The
+// first four are the shapes usually compared against each other; the last keeps a
+// wait within a fraction of the ceiling, which is the one to reach for when the
+// schedule is fixed.
 import {
   "moonbitstack/moondate",
 }

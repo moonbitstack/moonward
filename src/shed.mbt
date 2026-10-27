@@ -37,7 +37,9 @@ pub extend Shed with Eq::{not_equal, equal}
 /// assumed response time, an average weighted 0.9, one second to cool and never
 /// less than a tenth of capacity.
 ///
-/// These are the constants of go-zero's `core/load/adaptiveshedder.go`.
+/// A five-second memory, a threshold at ninety percent, and a floor under the
+/// share of capacity admitted: the values that make a server shed only when it
+/// is genuinely out of room.
 pub let shed : Shed = {
   size: 50,
   window: @moondate.Span::new(seconds=5L),
@@ -50,6 +52,15 @@ pub let shed : Shed = {
 
 ///|
 /// A policy by name, every knob with the preset's value.
+///
+/// # Parameters
+/// - `size` : buckets in the window, `50` in the preset
+/// - `window` : how far back that window reaches, `5 s` in the preset
+/// - `cpu` : CPU use in thousandths at or above which the server counts as hot, `900` in the preset
+/// - `latency` : response time assumed while the window has none, `1 s` in the preset
+/// - `beta` : weight of the old value in the moving average of calls in flight, `0.9` in the preset
+/// - `cool` : how long the server stays hot after the CPU falls back, `1 s` in the preset
+/// - `floor` : the least share of capacity admitted however high the CPU is, `0.1` in the preset
 pub fn Shed::new(
   size~ : Int32 = shed.size,
   window~ : @moondate.Span = shed.window,
@@ -87,6 +98,10 @@ pub struct Shedder {
 
 ///|
 /// A shedder with empty windows opening at `now`.
+///
+/// # Parameters
+/// - `shed` : the policy; the [`shed`](#shed) preset by default
+/// - `now` : the clock reading both windows open at, `0L` by default
 pub fn Shedder::new(shed~ : Shed = shed, now~ : Int64 = 0L) -> Shedder {
   {
     shed,
@@ -172,6 +187,10 @@ fn Shedder::heated(self : Shedder, now : Int64, cpu : Int32) -> Bool {
 ///
 /// `Some` means go ahead, and the caller settles the ticket once the call has
 /// finished.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
+/// - `cpu` : CPU use in thousandths, read by the caller
 pub fn Shedder::allow(self : Shedder, now : Int64, cpu : Int32) -> Ticket? {
   if self.heated(now, cpu) {
     let cap = self.capacity(now, cpu)
@@ -202,6 +221,9 @@ pub struct Ticket {
 ///|
 /// The call succeeded at `now`. Its response time counts towards what the server
 /// has shown it can do.
+///
+/// # Parameters
+/// - `now` : the clock reading the call finished at; its response time counts towards capacity
 pub fn Ticket::pass(self : Ticket, now : Int64) -> Unit {
   let s = self.shedder
   s.land()
