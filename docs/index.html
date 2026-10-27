@@ -123,8 +123,8 @@
 <section class="chain shell" id="chain">
   <div class="head">
     <span class="head__no mono">01</span>
-    <h2 class="head__t">Four places<br>a request can die</h2>
-    <p class="head__p">Each check is a struct you hold in your own code and a call that returns <code>Option</code>. In this order, a request that was never going to succeed is turned away before it costs a socket.</p>
+    <h2 class="head__t">Where a<br>request dies</h2>
+    <p class="head__p">Four places a request can be stopped, cheapest first. Each check is a struct you hold in your own code and a call that returns <code>Option</code>: a call that was never going to succeed is turned away before it costs a socket.</p>
   </div>
 
   <div class="chain__body">

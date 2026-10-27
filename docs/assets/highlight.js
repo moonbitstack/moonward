@@ -22,7 +22,7 @@ const pattern = new RegExp(
   "g",
 );
 
-const CLASSES = ["cm", "st", "ty", "nu", "kw", "kw", "ty", "fn"];
+const CLASSES = ["cm", "st", "ty", "nu", "kw", "kw", "ty", "cal"];
 
 export function highlight(root = document) {
   for (const pre of root.querySelectorAll("pre[data-lang]")) {
