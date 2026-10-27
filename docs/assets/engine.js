@@ -1,5 +1,5 @@
 // The browser bridge. The panel engine is the library itself, compiled to
-// JavaScript: `moon build src/demo --target js` drops it beside this file and it
+// JavaScript: `moon build src/examples/browser --target js` drops it beside this file and it
 // hands us one function that answers with JSON.
 //
 // Nothing on the page simulates anything. Every number drawn comes back through
@@ -15,7 +15,7 @@ try {
   await import("./moonward.js");
 } catch (err) {
   console.warn(
-    "moonward: engine bundle missing — build it with `moon build src/demo --target js`",
+    "moonward: engine bundle missing — build it with `moon build src/examples/browser --target js`",
     err.message,
   );
 }

@@ -695,3 +695,5 @@ pre.code::-webkit-scrollbar-thumb {
     scroll-behavior: auto !important;
   }
 }
+
+html, button, input, textarea, select { font-variant-ligatures: no-contextual; }

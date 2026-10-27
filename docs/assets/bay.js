@@ -269,7 +269,7 @@ function redrawAll() {
 function start() {
   if (!ready()) {
     if (status) {
-      status.textContent = "engine not built — run: moon build src/demo --target js";
+      status.textContent = "engine not built — run: moon build src/examples/browser --target js";
       status.classList.add("is-off");
     }
     for (const input of document.querySelectorAll("input, select")) input.disabled = true;
