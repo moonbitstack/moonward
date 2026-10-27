@@ -18,7 +18,7 @@ keywords = [
   "moonbit",
 ]
 
-description = "Resilience without I/O: circuit breaking, rate limiting, adaptive load shedding, backoff, rolling windows and deadlines, with the clock and the randomness passed in."
+description = "Resilience for MoonBit without I/O: circuit breaking, load shedding, rate limits and deadlines."
 
 source = "src"
 
