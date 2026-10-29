@@ -622,7 +622,8 @@ TEMPLATE = """<!doctype html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/site.css">
-<link rel="stylesheet" href="assets/doc.css">
+
+<script type="module" src="assets/scrollbar.js"></script><link rel="stylesheet" href="assets/doc.css">
 </head>
 <body>
 
