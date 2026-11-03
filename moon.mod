@@ -1,6 +1,6 @@
 name = "moonbitstack/moonward"
 
-version = "0.2.0"
+version = "0.2.1"
 
 readme = "README.md"
 
@@ -10,11 +10,18 @@ license = "Apache-2.0"
 
 keywords = [
   "resilience",
+  "fault-tolerance",
   "circuit-breaker",
   "rate-limit",
+  "rate-limiter",
+  "token-bucket",
+  "sliding-window",
   "load-shedding",
   "backoff",
   "retry",
+  "deadline",
+  "timeout",
+  "throttling",
   "moonbit",
 ]
 
