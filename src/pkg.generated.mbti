@@ -16,13 +16,14 @@ pub let sre : Sre
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Backoff {
   base : @moondate.Span
   factor : Double
   cap : @moondate.Span
   attempts : Int32
   jitter : Jitter
-} derive(Eq, @debug.Debug)
+}
 pub fn Backoff::ceiling(Self, Int32) -> @moondate.Span
 pub fn Backoff::delay(Self, Int32, random? : Double, previous? : @moondate.Span) -> @moondate.Span
 pub fn Backoff::equal(Self, Self) -> Bool
@@ -69,22 +70,24 @@ pub fn Gate::held(Self) -> Int32
 pub fn Gate::leave(Self) -> Unit
 pub fn Gate::new(Int32) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Jitter {
   Rigid
   Full
   Equal
   Decorrelated
   Spread(Double)
-} derive(Eq, @debug.Debug)
+}
 pub fn Jitter::equal(Self, Self) -> Bool
 pub fn Jitter::not_equal(Self, Self) -> Bool
 pub fn Jitter::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Outcome {
   Success
   Failure
   Drop
-} derive(Eq, @debug.Debug)
+}
 pub fn Outcome::equal(Self, Self) -> Bool
 pub fn Outcome::not_equal(Self, Self) -> Bool
 pub fn Outcome::to_repr(Self) -> @debug.Repr
@@ -107,15 +110,17 @@ pub struct Promise {
 pub fn Promise::fail(Self, Int64) -> Unit
 pub fn Promise::pass(Self, Int64) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Quota {
   Under
   Hit
   Over
-} derive(Eq, @debug.Debug)
+}
 pub fn Quota::equal(Self, Self) -> Bool
 pub fn Quota::not_equal(Self, Self) -> Bool
 pub fn Quota::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Shed {
   size : Int32
   window : @moondate.Span
@@ -124,7 +129,7 @@ pub(all) struct Shed {
   beta : Double
   cool : @moondate.Span
   floor : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Shed::equal(Self, Self) -> Bool
 pub fn Shed::new(size? : Int32, window? : @moondate.Span, cpu? : Int32, latency? : @moondate.Span, beta? : Double, cool? : @moondate.Span, floor? : Double) -> Self
 pub fn Shed::not_equal(Self, Self) -> Bool
@@ -153,6 +158,7 @@ pub fn Sliding::new(Int32, @moondate.Span) -> Self
 pub fn Sliding::next(Self, Int64) -> @moondate.Span
 pub fn Sliding::take(Self, Int64) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Sre {
   k : Double
   floor : Double
@@ -160,18 +166,19 @@ pub(all) struct Sre {
   probe : @moondate.Span
   size : Int32
   window : @moondate.Span
-} derive(Eq, @debug.Debug)
+}
 pub fn Sre::equal(Self, Self) -> Bool
 pub fn Sre::new(k? : Double, floor? : Double, protection? : Double, probe? : @moondate.Span, size? : Int32, window? : @moondate.Span) -> Self
 pub fn Sre::not_equal(Self, Self) -> Bool
 pub fn Sre::to_repr(Self) -> @debug.Repr
 
+#derive(Default, Eq, @debug.Debug)
 pub struct Tally {
   mut total : Int64
   mut success : Int64
   mut failure : Int64
   mut drop : Int64
-} derive(Default, Eq, @debug.Debug)
+}
 pub fn Tally::add(Self, Outcome) -> Unit
 pub fn Tally::default() -> Self
 pub fn Tally::equal(Self, Self) -> Bool
@@ -185,10 +192,11 @@ pub struct Ticket {
 pub fn Ticket::fail(Self) -> Unit
 pub fn Ticket::pass(Self, Int64) -> Unit
 
+#derive(Default, Eq, @debug.Debug)
 pub struct Total {
   mut sum : Int64
   mut count : Int64
-} derive(Default, Eq, @debug.Debug)
+}
 pub fn Total::add(Self, Int64) -> Unit
 pub fn Total::default() -> Self
 pub fn Total::equal(Self, Self) -> Bool

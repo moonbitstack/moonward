@@ -6,6 +6,7 @@
 ///
 /// The preset is [`shed`]. Build another with [`Shed::new`], or update one in
 /// place with `{ ..shed, cpu: 800 }`.
+#derive(Eq, Debug)
 pub(all) struct Shed {
   /// Buckets in the window the throughput and response times are read from.
   size : Int32
@@ -24,7 +25,7 @@ pub(all) struct Shed {
   cool : @moondate.Span
   /// The least share of the estimated capacity admitted however high the CPU is.
   floor : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Shed with Debug::{to_repr}

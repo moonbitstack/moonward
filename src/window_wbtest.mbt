@@ -90,9 +90,10 @@ test "a nonsense size is clamped and a backwards clock is no elapsed time" {
 
 ///|
 /// A bucket this package does not define, to show any `Default` type is one.
+#derive(Default)
 priv struct Peak {
   mut top : Int64
-} derive(Default)
+}
 
 ///|
 test "a bucket can be any type with a default" {

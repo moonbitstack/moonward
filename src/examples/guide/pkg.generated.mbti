@@ -10,7 +10,8 @@ import {
 // Errors
 
 // Types and methods
-type Hits derive(Default, @debug.Debug)
+#derive(Default, @debug.Debug)
+type Hits
 
 // Type aliases
 

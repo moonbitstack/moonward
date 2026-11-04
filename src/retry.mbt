@@ -17,13 +17,14 @@
 /// | `Equal` | half the cap plus uniform over `[0, cap/2]`. Keeps a floor under the wait |
 /// | `Decorrelated` | uniform over `[base, previous × 3]`. Grows from where it last landed rather than from the attempt number |
 /// | `Spread(f)` | uniform over `[cap × (1 − f), cap × (1 + f)]`, `f` held to `[0, 1]`. So the wait can pass the cap by `f` |
+#derive(Eq, Debug)
 pub(all) enum Jitter {
   Rigid
   Full
   Equal
   Decorrelated
   Spread(Double)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Jitter with Debug::{to_repr}
@@ -36,13 +37,14 @@ pub extend Jitter with Eq::{not_equal, equal}
 ///
 /// The preset is [`backoff`]. Build another with [`Backoff::new`], or update one in
 /// place with `{ ..backoff, attempts: 5 }`.
+#derive(Eq, Debug)
 pub(all) struct Backoff {
   base : @moondate.Span
   factor : Double
   cap : @moondate.Span
   attempts : Int32
   jitter : Jitter
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Backoff with Debug::{to_repr}

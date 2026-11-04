@@ -16,9 +16,10 @@ fn ms(n : Int64) -> Int64 {
 ///|
 /// A bucket type of our own, to show that a window takes any type with a
 /// `Default`: here, how many requests a hundred milliseconds saw.
+#derive(Default, Debug)
 struct Hits {
   mut calls : Int64
-} derive(Default, Debug)
+}
 
 ///|
 fn main {

@@ -187,11 +187,12 @@ fn Sliding::forget(self : Sliding, now : Int64) -> Unit {
 ///
 /// The event that hits the quota is still admitted. It is told apart because it is
 /// the last one, which is when a caller would warn that the next will be refused.
+#derive(Eq, Debug)
 pub(all) enum Quota {
   Under
   Hit
   Over
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Quota with Debug::{to_repr}

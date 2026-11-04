@@ -6,6 +6,7 @@
 ///
 /// The preset is [`sre`]. Build another with [`Sre::new`], or update one in place
 /// with `{ ..sre, k: 2.0 }`.
+#derive(Eq, Debug)
 pub(all) struct Sre {
   /// How many calls each success pays for. At 1.5 a backend is left alone until
   /// more than a third of its calls fail.
@@ -23,7 +24,7 @@ pub(all) struct Sre {
   size : Int32
   /// How far back the window reaches.
   window : @moondate.Span
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Sre with Debug::{to_repr}

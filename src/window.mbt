@@ -131,11 +131,12 @@ pub fn[B] Window::each(
 ///
 /// A `Drop` is a call refused before it ran: traffic, but neither a success nor a
 /// failure of whatever is downstream.
+#derive(Eq, Debug)
 pub(all) enum Outcome {
   Success
   Failure
   Drop
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Outcome with Debug::{to_repr}
@@ -148,12 +149,13 @@ pub extend Outcome with Eq::{not_equal, equal}
 ///
 /// `total` counts every call including the dropped ones, so a bucket being
 /// throttled still reads as busy rather than idle.
+#derive(Default, Eq, Debug)
 pub struct Tally {
   mut total : Int64
   mut success : Int64
   mut failure : Int64
   mut drop : Int64
-} derive(Default, Eq, Debug)
+}
 
 ///|
 pub extend Tally with Default::{default}
@@ -181,10 +183,11 @@ pub fn Tally::add(self : Tally, o : Outcome) -> Unit {
 ///|
 /// A sum and how many values went into it, which is a mean once `count` is
 /// positive.
+#derive(Default, Eq, Debug)
 pub struct Total {
   mut sum : Int64
   mut count : Int64
-} derive(Default, Eq, Debug)
+}
 
 ///|
 pub extend Total with Default::{default}
