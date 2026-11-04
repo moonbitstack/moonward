@@ -353,7 +353,7 @@ drop ×= (size - working) / size</pre>
 </header>
 <div class="api__doc"><p>Where a <a class="ref" href="#Period"><code>Period</code></a> stands after an event: under the quota, exactly on it, or past it.</p>
 <p>The event that hits the quota is still admitted. It is told apart because it is the last one, which is when a caller would warn that the next will be refused.</p></div>
-<ul class="variants"><li><code>Under</code></li><li><code>Hit</code></li><li><code>Over</code></li><li><code>} derive(Eq, @debug.Debug)</code></li></ul>
+<ul class="variants"><li><code>Under</code></li><li><code>Hit</code></li><li><code>Over</code></li></ul>
 </article>
 </section>
 <section class="group" id="g04"><h2 class="group__t"><i>04</i>Concurrency</h2>
@@ -450,7 +450,7 @@ drop ×= (size - working) / size</pre>
 <div class="api__doc"><p>How much randomness goes into a delay.</p>
 <p>A retry with no jitter makes every client that failed together try again together, which is how one outage becomes a second one. <code>Full</code>, <code>Equal</code> and <code>Decorrelated</code> are the three shapes the literature names and measures; <code>Spread</code> keeps the wait within a fraction of the ceiling instead, which is the easier one to reason about when the schedule is fixed by something else:</p>
 <table class="mtable"><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><code>Rigid</code></td><td>the computed delay, unchanged. Reproducible, and it synchronises clients</td></tr><tr><td><code>Full</code></td><td>uniform over <code>[0, cap]</code>. The one that spreads clients furthest</td></tr><tr><td><code>Equal</code></td><td>half the cap plus uniform over <code>[0, cap/2]</code>. Keeps a floor under the wait</td></tr><tr><td><code>Decorrelated</code></td><td>uniform over <code>[base, previous × 3]</code>. Grows from where it last landed rather than from the attempt number</td></tr><tr><td><code>Spread(f)</code></td><td>uniform over <code>[cap × (1 − f), cap × (1 + f)]</code>, <code>f</code> held to <code>[0, 1]</code>. So the wait can pass the cap by <code>f</code></td></tr></tbody></table></div>
-<ul class="variants"><li><code>Rigid</code></li><li><code>Full</code></li><li><code>Equal</code></li><li><code>Decorrelated</code></li><li><code>Spread(Double)</code></li><li><code>} derive(Eq, @debug.Debug)</code></li></ul>
+<ul class="variants"><li><code>Rigid</code></li><li><code>Full</code></li><li><code>Equal</code></li><li><code>Decorrelated</code></li><li><code>Spread(Double)</code></li></ul>
 </article>
 </section>
 <section class="group" id="g06"><h2 class="group__t"><i>06</i>Time</h2>
@@ -540,7 +540,7 @@ drop ×= (size - working) / size</pre>
 </header>
 <div class="api__doc"><p>How a call ended, as a breaker records it.</p>
 <p>A <code>Drop</code> is a call refused before it ran: traffic, but neither a success nor a failure of whatever is downstream.</p></div>
-<ul class="variants"><li><code>Success</code></li><li><code>Failure</code></li><li><code>Drop</code></li><li><code>} derive(Eq, @debug.Debug)</code></li></ul>
+<ul class="variants"><li><code>Success</code></li><li><code>Failure</code></li><li><code>Drop</code></li></ul>
 </article>
 <article class="api" id="Tally" data-name="tally">
 <header class="api__head">

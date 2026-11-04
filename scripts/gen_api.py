@@ -118,7 +118,7 @@ def parse_sources() -> tuple[dict[str, str], dict[str, dict[str, str]], dict[str
                 i += 1
                 continue
             s = raw.strip()
-            if not s or s.startswith("//"):
+            if not s or s.startswith(("//", "#")):
                 i += 1
                 continue
 
@@ -237,7 +237,7 @@ def parse_mbti() -> tuple[list[Item], list[Item]]:
             current.opaque = m.group(1) is None
             types.append(current)
             continue
-        if s == "}":
+        if s == "}" or s.startswith("#"):
             continue
         if s.startswith("pub fn"):
             rest = s[len("pub fn") :].strip()
