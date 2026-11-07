@@ -118,6 +118,20 @@ fn station_6() -> Unit {
   println("held      \{gate.held()}")
   gate.leave()
   println("after one leaves, held \{gate.held()}, enter \{gate.enter()}")
+  let limiter = @moonward.Limiter::new(rule=Aimd(@moonward.aimd))
+  let held = []
+  while limiter.acquire(0L) is Some(lease) {
+    held.push(lease)
+  }
+  println("limit     \{limiter.limit()}, in flight \{limiter.flying()}")
+  for lease in held {
+    lease.pass(ms(10L))
+  }
+  println("after 20 fast calls, limit \{limiter.limit()}")
+  for _ in 0..<3 {
+    limiter.acquire(ms(10L)).unwrap().fail(ms(5010L))
+  }
+  println("after 3 timeouts, limit \{limiter.limit()}")
 }
 
 ///|

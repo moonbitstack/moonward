@@ -70,7 +70,7 @@
 <li><a href="#g05"><i>05</i>Retry</a><ul class="idx__types"><li><a href="#Backoff">Backoff</a></li><li><a href="#Jitter">Jitter</a></li></ul></li>
 <li><a href="#g06"><i>06</i>Time</a><ul class="idx__types"><li><a href="#Deadline">Deadline</a></li></ul></li>
 <li><a href="#g07"><i>07</i>Windows</a><ul class="idx__types"><li><a href="#Window">Window</a></li><li><a href="#Outcome">Outcome</a></li><li><a href="#Tally">Tally</a></li><li><a href="#Total">Total</a></li></ul></li>
-<li><a href="#gvalues"><i>08</i>Presets</a><ul class="idx__types"><li><a href="#backoff">backoff</a></li><li><a href="#shed">shed</a></li><li><a href="#sre">sre</a></li></ul></li>
+<li><a href="#gvalues"><i>08</i>Presets</a><ul class="idx__types"><li><a href="#aimd">aimd</a></li><li><a href="#backoff">backoff</a></li><li><a href="#gradient">gradient</a></li><li><a href="#shed">shed</a></li><li><a href="#sre">sre</a></li><li><a href="#vegas">vegas</a></li></ul></li>
       </ul>
     </div>
   </aside>
@@ -608,6 +608,152 @@ drop ×= (size - working) / size</pre>
   </header>
   <div class="api__doc"><p>The preset: three attempts, a hundred milliseconds doubling to a one-second ceiling, spread by a fifth either way.</p>
 <p>Each wait is the computed ceiling spread by a fifth below or above it, so a plan of <code>0.8</code> to <code>1.2</code> of the schedule is easy to explain to whoever asks why the second retry waited 168 ms and not 200.</p></div>
+</article>
+</section>
+<section class="group" id="grest"><h2 class="group__t"><i>09</i>Also public</h2>
+<article class="api" id="Aimd" data-name="aimd">
+<header class="api__head">
+  <h3 class="api__name">Aimd</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>Additive increase, multiplicative decrease: one more while the limit is being used, a fixed share less on a drop or a call slower than the timeout.</p>
+<p>The preset is <a class="ref" href="#aimd"><code>aimd</code></a>. Build another with <a class="ref" href="#Aimd::new"><code>Aimd::new</code></a>, or update one in place with <code>{ ..aimd, max: 500 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit before any call has finished.</td></tr><tr><td class="pname"><code>min</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes under this.</td></tr><tr><td class="pname"><code>max</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes over this.</td></tr><tr><td class="pname"><code>backoff</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">The share of the limit kept after a drop.</td></tr><tr><td class="pname"><code>timeout</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">A call slower than this counts as a drop.</td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="Aimd-new" data-name="aimd::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Aimd</span>::new(initial~ : <span class="ty">Int32</span> = aimd.initial,&#8203; min~ : <span class="ty">Int32</span> = aimd.min,&#8203; max~ : <span class="ty">Int32</span> = aimd.max,&#8203; backoff~ : <span class="ty">Double</span> = aimd.backoff,&#8203; timeout~ : <span class="ty">@moondate.<span class="ty">Span</span></span> = aimd.timeout) -&gt; <span class="ty">Aimd</span></code></div>
+  <div class="fn__doc"><p>A rule by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">aimd.initial</code></td><td class="pdoc">the limit before any call has finished, <code>20</code> in the preset</td></tr><tr><td class="pname"><code>min</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">aimd.min</code></td><td class="pdoc">the least the limit goes to, <code>20</code> in the preset</td></tr><tr><td class="pname"><code>max</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">aimd.max</code></td><td class="pdoc">the most the limit goes to, <code>200</code> in the preset</td></tr><tr><td class="pname"><code>backoff</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">aimd.backoff</code></td><td class="pdoc">the share kept after a drop, <code>0.9</code> in the preset</td></tr><tr><td class="pname"><code>timeout</code><i class="lab">~</i></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdef"><code class="dflt">aimd.timeout</code></td><td class="pdoc">a call slower than this counts as a drop, <code>5 s</code> in the preset</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Gradient" data-name="gradient">
+<header class="api__head">
+  <h3 class="api__name">Gradient</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>The gradient between a long-run average response time and the latest one: when calls get slower than usual, the limit shrinks in proportion, and a few slots are always added on top so it can find room to grow.</p>
+<p>The preset is <a class="ref" href="#gradient"><code>gradient</code></a>. Build another with <a class="ref" href="#Gradient::new"><code>Gradient::new</code></a>, or update one in place with <code>{ ..gradient, queue: 8 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit before any call has finished.</td></tr><tr><td class="pname"><code>min</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes under this.</td></tr><tr><td class="pname"><code>max</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes over this.</td></tr><tr><td class="pname"><code>smoothing</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How far towards each new estimate the limit moves, from 0 to 1.</td></tr><tr><td class="pname"><code>queue</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Slots added to every estimate, room for the limit to grow into.</td></tr><tr><td class="pname"><code>window</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Calls the long-run average spans; the first ten are a plain mean.</td></tr><tr><td class="pname"><code>tolerance</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How much slower than the long-run average a call may be before the limit shrinks.</td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="Gradient-new" data-name="gradient::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gradient</span>::new(initial~ : <span class="ty">Int32</span> = gradient.initial,&#8203; min~ : <span class="ty">Int32</span> = gradient.min,&#8203; max~ : <span class="ty">Int32</span> = gradient.max,&#8203; smoothing~ : <span class="ty">Double</span> = gradient.smoothing,&#8203; queue~ : <span class="ty">Int32</span> = gradient.queue,&#8203; window~ : <span class="ty">Int32</span> = gradient.window,&#8203; tolerance~ : <span class="ty">Double</span> = gradient.tolerance) -&gt; <span class="ty">Gradient</span></code></div>
+  <div class="fn__doc"><p>A rule by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">gradient.initial</code></td><td class="pdoc">the limit before any call has finished, <code>20</code> in the preset</td></tr><tr><td class="pname"><code>min</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">gradient.min</code></td><td class="pdoc">the least the limit goes to, <code>20</code> in the preset</td></tr><tr><td class="pname"><code>max</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">gradient.max</code></td><td class="pdoc">the most the limit goes to, <code>200</code> in the preset</td></tr><tr><td class="pname"><code>smoothing</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">gradient.smoothing</code></td><td class="pdoc">how far towards each new estimate the limit moves, <code>0.2</code> in the preset</td></tr><tr><td class="pname"><code>queue</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">gradient.queue</code></td><td class="pdoc">slots added to every estimate, <code>4</code> in the preset</td></tr><tr><td class="pname"><code>window</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">gradient.window</code></td><td class="pdoc">calls the long-run average spans, <code>600</code> in the preset</td></tr><tr><td class="pname"><code>tolerance</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">gradient.tolerance</code></td><td class="pdoc">how much slower than the average a call may be, <code>1.5</code> in the preset</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Lease" data-name="lease">
+<header class="api__head">
+  <h3 class="api__name">Lease</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A call the limiter let through. Exactly one of <code>pass</code>, <code>fail</code> and <code>ignore</code> settles it.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Lease-fail" data-name="lease::fail">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Lease</span>::fail(self : <span class="ty">Lease</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call timed out or was refused further down at <code>now</code>: the rule backs off.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Lease-ignore" data-name="lease::ignore">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Lease</span>::ignore(self : <span class="ty">Lease</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call ended in a way that says nothing about load, such as a bad request. It leaves flight and is not a sample.</p></div>
+  
+</article>
+
+<article class="fn" id="Lease-pass" data-name="lease::pass">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Lease</span>::pass(self : <span class="ty">Lease</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>The call finished at <code>now</code>, and its response time is a sample.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Limiter" data-name="limiter">
+<header class="api__head">
+  <h3 class="api__name">Limiter</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A concurrency limit that adapts to the response times of the calls it lets through.</p>
+<p>Ask with <a class="ref" href="#Limiter::acquire"><code>Limiter::acquire</code></a> before each call. <code>None</code> means the limit is reached and the call should be refused or queued; <code>Some</code> is a lease to settle once the call is done, which is where the rule learns.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Limiter-acquire" data-name="limiter::acquire">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Limiter</span>::acquire(self : <span class="ty">Limiter</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Lease</span>?</code></div>
+  <div class="fn__doc"><p>Ask to start one call at <code>now</code>, in nanoseconds from the caller's clock.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Limiter-custom" data-name="limiter::custom">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Limiter</span>::custom(adapt : &amp;<span class="ty">Adapt</span>) -&gt; <span class="ty">Limiter</span></code></div>
+  <div class="fn__doc"><p>A limiter on a rule of your own.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>adapt</code></td><td class="ptype"><code>&amp;Adapt</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Limiter-flying" data-name="limiter::flying">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Limiter</span>::flying(self : <span class="ty">Limiter</span>) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>How many calls are in flight.</p></div>
+  
+</article>
+
+<article class="fn" id="Limiter-limit" data-name="limiter::limit">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Limiter</span>::limit(self : <span class="ty">Limiter</span>) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>The most calls that may be in flight now.</p></div>
+  
+</article>
+
+<article class="fn" id="Limiter-new" data-name="limiter::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Limiter</span>::new(rule~ : <span class="ty">Rule</span> = <span class="ty">Vegas</span>(vegas)</code></div>
+  <div class="fn__doc"><p>A limiter on one of the rules that ship.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>rule</code><i class="lab">~</i></td><td class="ptype"><code>Rule</code></td><td class="pdef"><code class="dflt">Vegas(vegas</code></td><td class="pdoc">how the limit moves; <code>Vegas(vegas)</code> by default, as in Netflix concurrency-limits</td></tr><tr><td class="pname"><code>roll</code></td><td class="ptype">—</td><td class="pdef">—</td><td class="pdoc">a draw from 0 to 1, used only by Vegas to spread its no-queue measurements so a fleet does not take them in step; a constant <code>0.5</code> by default</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Rule" data-name="rule">
+<header class="api__head">
+  <h3 class="api__name">Rule</h3>
+  <span class="chip chip--kind">enum</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>The rules that ship.</p></div>
+<ul class="variants"><li><code>Fixed(Int32)</code></li><li><code>Aimd(Aimd)</code></li><li><code>Vegas(Vegas)</code></li><li><code>Gradient(Gradient)</code></li></ul>
+</article>
+<article class="api" id="Sample" data-name="sample">
+<header class="api__head">
+  <h3 class="api__name">Sample</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>One finished call, as a rule sees it.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>rtt</code></td><td class="ptype"><code>Int64</code></td><td class="pdoc">How long the call took, in nanoseconds.</td></tr><tr><td class="pname"><code>flying</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Calls in flight when this one started, itself included.</td></tr><tr><td class="pname"><code>dropped</code></td><td class="ptype"><code>Bool</code></td><td class="pdoc">Whether the call timed out or was refused further down, which every rule reads as load to back off from.</td></tr></tbody></table>
+</article>
+<article class="api" id="Vegas" data-name="vegas">
+<header class="api__head">
+  <h3 class="api__name">Vegas</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>TCP Vegas carried over to requests: the shortest response time seen is the time with no queue, and how far a call's time is over it says how many calls are queued. A short queue grows the limit, a long one shrinks it.</p>
+<p>The thresholds scale with the limit: each is a multiple of the limit's decimal logarithm, rounded down and at least one, so a limit of 10 and one of 10 000 react in proportion.</p>
+<p>The preset is <a class="ref" href="#vegas"><code>vegas</code></a>. Build another with <a class="ref" href="#Vegas::new"><code>Vegas::new</code></a>, or update one in place with <code>{ ..vegas, smoothing: 0.5 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit before any call has finished.</td></tr><tr><td class="pname"><code>max</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes over this.</td></tr><tr><td class="pname"><code>smoothing</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How far towards each new estimate the limit moves, from 0 to 1.</td></tr><tr><td class="pname"><code>alpha</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Under this many queued calls, times the logarithm, the limit grows by one step.</td></tr><tr><td class="pname"><code>beta</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Over this many queued calls, times the logarithm, the limit shrinks by one step.</td></tr><tr><td class="pname"><code>threshold</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">At or under this many queued calls, times the logarithm, the limit grows by <code>beta</code> at once.</td></tr><tr><td class="pname"><code>step</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">How much one step moves the limit, times the logarithm.</td></tr><tr><td class="pname"><code>probe</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The time with no queue is measured again after about this many calls per unit of limit, so a slower backend raises the floor it is judged against.</td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="Vegas-new" data-name="vegas::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Vegas</span>::new(initial~ : <span class="ty">Int32</span> = vegas.initial,&#8203; max~ : <span class="ty">Int32</span> = vegas.max,&#8203; smoothing~ : <span class="ty">Double</span> = vegas.smoothing,&#8203; alpha~ : <span class="ty">Int32</span> = vegas.alpha,&#8203; beta~ : <span class="ty">Int32</span> = vegas.beta,&#8203; threshold~ : <span class="ty">Int32</span> = vegas.threshold,&#8203; step~ : <span class="ty">Int32</span> = vegas.step,&#8203; probe~ : <span class="ty">Int32</span> = vegas.probe) -&gt; <span class="ty">Vegas</span></code></div>
+  <div class="fn__doc"><p>A rule by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.initial</code></td><td class="pdoc">the limit before any call has finished, <code>20</code> in the preset</td></tr><tr><td class="pname"><code>max</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.max</code></td><td class="pdoc">the most the limit goes to, <code>1000</code> in the preset</td></tr><tr><td class="pname"><code>smoothing</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">vegas.smoothing</code></td><td class="pdoc">how far towards each new estimate the limit moves, <code>1.0</code> in the preset</td></tr><tr><td class="pname"><code>alpha</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.alpha</code></td><td class="pdoc">queued calls under which the limit grows a step, times the logarithm, <code>3</code> in the preset</td></tr><tr><td class="pname"><code>beta</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.beta</code></td><td class="pdoc">queued calls over which the limit shrinks a step, times the logarithm, <code>6</code> in the preset</td></tr><tr><td class="pname"><code>threshold</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.threshold</code></td><td class="pdoc">queued calls at or under which the limit grows by <code>beta</code>, times the logarithm, <code>1</code> in the preset</td></tr><tr><td class="pname"><code>step</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.step</code></td><td class="pdoc">one step, times the logarithm, <code>1</code> in the preset</td></tr><tr><td class="pname"><code>probe</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">vegas.probe</code></td><td class="pdoc">calls per unit of limit between measurements of the no-queue time, <code>30</code> in the preset</td></tr></tbody></table>
+</article>
+</div>
 </article>
 </section>
   </main>

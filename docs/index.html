@@ -49,7 +49,7 @@
     <div class="hero__text">
       <p class="eyebrow">MoonBit · resilience primitives</p>
       <h1 class="hero__title"><span>Moon</span><span>ward</span></h1>
-      <p class="lede">Keep a failing dependency from taking the rest of the system down with it. Nine primitives that decide from the numbers you hand them, so a ten-second outage replays in a loop that takes no time at all.</p>
+      <p class="lede">Keep a failing dependency from taking the rest of the system down with it. Ten primitives that decide from the numbers you hand them, so a ten-second outage replays in a loop that takes no time at all.</p>
       <div class="hero__acts">
         <a class="btn" href="guide.html">Read the guide <span aria-hidden="true">→</span></a>
         <a class="btn btn--ghost" href="bay.html">Open the bay</a>
@@ -115,8 +115,8 @@
 <section class="conveyor" aria-label="The primitives">
   <div class="conveyor__track">
     <div class="conveyor__run mono">
-      <span>Breaker</span><i></i><span>Shedder</span><i></i><span>Bucket</span><i></i><span>Sliding</span><i></i><span>Period</span><i></i><span>Gate</span><i></i><span>Backoff</span><i></i><span>Deadline</span><i></i><span>Window</span><i></i>
-      <span>Breaker</span><i></i><span>Shedder</span><i></i><span>Bucket</span><i></i><span>Sliding</span><i></i><span>Period</span><i></i><span>Gate</span><i></i><span>Backoff</span><i></i><span>Deadline</span><i></i><span>Window</span><i></i>
+      <span>Breaker</span><i></i><span>Shedder</span><i></i><span>Bucket</span><i></i><span>Sliding</span><i></i><span>Period</span><i></i><span>Gate</span><i></i><span>Limiter</span><i></i><span>Backoff</span><i></i><span>Deadline</span><i></i><span>Window</span><i></i>
+      <span>Breaker</span><i></i><span>Shedder</span><i></i><span>Bucket</span><i></i><span>Sliding</span><i></i><span>Period</span><i></i><span>Gate</span><i></i><span>Limiter</span><i></i><span>Backoff</span><i></i><span>Deadline</span><i></i><span>Window</span><i></i>
     </div>
   </div>
 </section>
@@ -229,7 +229,7 @@ match s.allow(now, cpu) {
   <div class="head">
     <span class="head__no mono">02</span>
     <h2 class="head__t">The parts bin</h2>
-    <p class="head__p">Nine types, one policy record each where a policy makes sense. Every preset can be copied and changed with two braces: <code>{ ..sre, k: 2.0 }</code>.</p>
+    <p class="head__p">Ten types, one policy record each where a policy makes sense. Every preset can be copied and changed with two braces: <code>{ ..sre, k: 2.0 }</code>.</p>
   </div>
 
   <div class="bin">
@@ -336,7 +336,7 @@ match s.allow(now, cpu) {
       </svg>
     </article>
 
-    <article class="part span6">
+    <article class="part span4">
       <header><span class="part__no mono">MW-08</span><h3>Deadline</h3></header>
       <p>A budget measured from the instant it started. A budget of zero never expires, so an unset timeout cannot time everything out at once.</p>
       <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
@@ -348,7 +348,7 @@ match s.allow(now, cpu) {
       </svg>
     </article>
 
-    <article class="part span6">
+    <article class="part span4">
       <header><span class="part__no mono">MW-09</span><h3>Window</h3></header>
       <p>A rolling window of buckets you define. Anything with a <code>Default</code> can be a bucket, and the default is what a bucket is cleared back to.</p>
       <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
@@ -358,6 +358,17 @@ match s.allow(now, cpu) {
         <rect x="206" y="14" width="30" height="26" fill="var(--hot)" fill-opacity=".85"/>
         <path d="M36 4h134" stroke="var(--sig)"/>
         <path d="M36 0v8M170 0v8" stroke="var(--sig)"/>
+      </svg>
+    </article>
+
+    <article class="part span4">
+      <header><span class="part__no mono">MW-10</span><h3>Limiter</h3></header>
+      <p>A concurrency limit that finds itself. Fast calls raise it, slow ones and timeouts bring it down: AIMD, Vegas or Gradient, or a rule of your own.</p>
+      <svg class="part__art" viewBox="0 0 240 54" fill="none" aria-hidden="true">
+        <path d="M0 48h240" stroke="currentColor" stroke-opacity=".3"/>
+        <path d="M0 38h24v-3h24v-3h24v-3h24v-3h24v-3h20v9h22v-6h22v-3h22v-3h34" stroke="var(--sig)" stroke-width="1.4"/>
+        <path d="M0 44h140l8-30 6 30h86" stroke="var(--hot)" stroke-opacity=".7" stroke-dasharray="3 3"/>
+        <circle cx="140" cy="23" r="2.4" fill="var(--hot)"/>
       </svg>
     </article>
   </div>

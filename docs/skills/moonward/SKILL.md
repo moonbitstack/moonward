@@ -1,6 +1,6 @@
 ---
 name: moonward
-description: "Decide whether a call should go ahead, in MoonBit with moonbitstack/moonward: a circuit breaker in the style of Google SRE, adaptive load shedding, token bucket, sliding window and fixed-period limiters, a concurrency gate, retry backoff with jitter, and deadlines. Nothing reads a clock or a random source; the caller passes both. Use when adding retries, rate limits, timeouts or overload protection to a client or a server."
+description: "Decide whether a call should go ahead, in MoonBit with moonbitstack/moonward: a circuit breaker in the style of Google SRE, adaptive load shedding, an adaptive concurrency limit (AIMD, Vegas, Gradient), token bucket, sliding window and fixed-period limiters, a concurrency gate, retry backoff with jitter, and deadlines. Nothing reads a clock or a random source; the caller passes both. Use when adding retries, rate limits, timeouts or overload protection to a client or a server."
 ---
 
 # moonward
@@ -74,6 +74,18 @@ fn admit(bucket : @moonward.Bucket, now : Int64) -> Result[Unit, Int64] {
 ```
 
 `Bucket::new(rate, burst=8.0)` takes `rate` tokens a second and holds at most `burst`. `Sliding` counts a quota over any window-long stretch, `Period` over fixed periods, and `Gate` only how many are in flight (`enter`, `leave`).
+
+## A concurrency limit that adapts
+
+```moonbit
+fn call_backend(limiter : @moonward.Limiter, now : Int64, done_at : Int64) -> Bool {
+  guard limiter.acquire(now) is Some(lease) else { return false }
+  lease.pass(done_at) // fail(now) on a timeout or an overload reply, ignore() otherwise
+  true
+}
+```
+
+`Limiter::new()` runs Vegas from a limit of 20; `rule=Gradient(@moonward.gradient)` and `rule=Aimd(@moonward.aimd)` are the others. Settle every lease exactly once, or the limiter counts the call as in flight for ever.
 
 ## Things that catch people out
 

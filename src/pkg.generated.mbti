@@ -7,15 +7,34 @@ import {
 }
 
 // Values
+pub let aimd : Aimd
+
 pub let backoff : Backoff
+
+pub let gradient : Gradient
 
 pub let shed : Shed
 
 pub let sre : Sre
 
+pub let vegas : Vegas
+
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct Aimd {
+  initial : Int32
+  min : Int32
+  max : Int32
+  backoff : Double
+  timeout : @moondate.Span
+}
+pub fn Aimd::equal(Self, Self) -> Bool
+pub fn Aimd::new(initial? : Int32, min? : Int32, max? : Int32, backoff? : Double, timeout? : @moondate.Span) -> Self
+pub fn Aimd::not_equal(Self, Self) -> Bool
+pub fn Aimd::to_repr(Self) -> @debug.Repr
+
 #derive(Eq, @debug.Debug)
 pub(all) struct Backoff {
   base : @moondate.Span
@@ -71,6 +90,21 @@ pub fn Gate::leave(Self) -> Unit
 pub fn Gate::new(Int32) -> Self
 
 #derive(Eq, @debug.Debug)
+pub(all) struct Gradient {
+  initial : Int32
+  min : Int32
+  max : Int32
+  smoothing : Double
+  queue : Int32
+  window : Int32
+  tolerance : Double
+}
+pub fn Gradient::equal(Self, Self) -> Bool
+pub fn Gradient::new(initial? : Int32, min? : Int32, max? : Int32, smoothing? : Double, queue? : Int32, window? : Int32, tolerance? : Double) -> Self
+pub fn Gradient::not_equal(Self, Self) -> Bool
+pub fn Gradient::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
 pub(all) enum Jitter {
   Rigid
   Full
@@ -81,6 +115,25 @@ pub(all) enum Jitter {
 pub fn Jitter::equal(Self, Self) -> Bool
 pub fn Jitter::not_equal(Self, Self) -> Bool
 pub fn Jitter::to_repr(Self) -> @debug.Repr
+
+pub struct Lease {
+  limiter : Limiter
+  start : Int64
+  flying : Int32
+}
+pub fn Lease::fail(Self, Int64) -> Unit
+pub fn Lease::ignore(Self) -> Unit
+pub fn Lease::pass(Self, Int64) -> Unit
+
+pub struct Limiter {
+  adapt : &Adapt
+  mut flying : Int32
+}
+pub fn Limiter::acquire(Self, Int64) -> Lease?
+pub fn Limiter::custom(&Adapt) -> Self
+pub fn Limiter::flying(Self) -> Int32
+pub fn Limiter::limit(Self) -> Int32
+pub fn Limiter::new(rule? : Rule, roll? : () -> Double) -> Self
 
 #derive(Eq, @debug.Debug)
 pub(all) enum Outcome {
@@ -119,6 +172,27 @@ pub(all) enum Quota {
 pub fn Quota::equal(Self, Self) -> Bool
 pub fn Quota::not_equal(Self, Self) -> Bool
 pub fn Quota::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Rule {
+  Fixed(Int32)
+  Aimd(Aimd)
+  Vegas(Vegas)
+  Gradient(Gradient)
+}
+pub fn Rule::equal(Self, Self) -> Bool
+pub fn Rule::not_equal(Self, Self) -> Bool
+pub fn Rule::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Sample {
+  rtt : Int64
+  flying : Int32
+  dropped : Bool
+}
+pub fn Sample::equal(Self, Self) -> Bool
+pub fn Sample::not_equal(Self, Self) -> Bool
+pub fn Sample::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
 pub(all) struct Shed {
@@ -203,6 +277,22 @@ pub fn Total::equal(Self, Self) -> Bool
 pub fn Total::not_equal(Self, Self) -> Bool
 pub fn Total::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
+pub(all) struct Vegas {
+  initial : Int32
+  max : Int32
+  smoothing : Double
+  alpha : Int32
+  beta : Int32
+  threshold : Int32
+  step : Int32
+  probe : Int32
+}
+pub fn Vegas::equal(Self, Self) -> Bool
+pub fn Vegas::new(initial? : Int32, max? : Int32, smoothing? : Double, alpha? : Int32, beta? : Int32, threshold? : Int32, step? : Int32, probe? : Int32) -> Self
+pub fn Vegas::not_equal(Self, Self) -> Bool
+pub fn Vegas::to_repr(Self) -> @debug.Repr
+
 pub struct Window[B] {
   width : Int64
   buckets : Array[B]
@@ -218,3 +308,7 @@ pub fn[B] Window::width(Self[B]) -> @moondate.Span
 // Type aliases
 
 // Traits
+pub(open) trait Adapt {
+  fn limit(Self) -> Int32
+  fn sample(Self, Sample) -> Unit
+}

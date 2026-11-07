@@ -3,7 +3,7 @@
 <h1>moonward</h1>
 
 <p><b>Resilience without I/O.</b><br>
-A circuit breaker, adaptive load shedding, four limiters, backoff and a deadline.<br>
+A circuit breaker, adaptive load shedding, an adaptive concurrency limit, four limiters, backoff and a deadline.<br>
 Every decision is a function of the numbers you pass in, so every sequence is reproducible.</p>
 
 <p>
@@ -20,12 +20,13 @@ Every decision is a function of the numbers you pass in, so every sequence is re
 
 ## What it is
 
-Nine types that answer one question each: should this call go ahead.
+Ten types that answer one question each: should this call go ahead.
 
 |  | Answers | Refuses when |
 |:--|:--|:--|
 | **`Breaker`** | Is this backend likely to work? | a draw falls under a refusal fraction built from the last ten seconds of outcomes |
 | **`Shedder`** | Should this server take on another call? | the CPU is over its threshold **and** more calls are in flight than the server has shown it can finish |
+| **`Limiter`** | How many calls may be in flight, judging by how fast they come back? | in flight has reached a limit that AIMD, Vegas or Gradient moves with every call that finishes |
 | **`Bucket`** | Is this call within a rate? | the token is spent; `next` says when the next one lands |
 | **`Sliding`** | Is it within a quota over any window-long stretch? | the count reaches the quota |
 | **`Period`** | Is it within a quota this period? | the count for the open period is spent |
@@ -68,6 +69,28 @@ A call is refused only when the server is both **hot** and **full**:
 
 A CPU spike with nothing queued refuses nothing, and neither does a long queue on an idle CPU. CPU use is read by you, in thousandths, and passed to each `allow`.
 
+## The adaptive limit
+
+`Limiter` is a concurrency limit that finds itself. Each call takes a lease; when the call finishes, its response time is a sample, and the rule moves the limit: up while calls come back as fast as ever, down once they queue.
+
+```moonbit
+let limiter = @moonward.Limiter::new(rule=Gradient(@moonward.gradient))
+match limiter.acquire(0L) {
+  Some(lease) => lease.pass(12_000_000L) // or lease.fail(now) on a timeout, lease.ignore() on a bad request
+  None => println("over the limit")
+}
+assert_eq(limiter.limit(), 20)
+```
+
+| Rule | Moves the limit by |
+|:--|:--|
+| `Aimd` | one up while at least half of it is used, a tenth down on a drop or a call over the timeout |
+| `Vegas` | how many calls are queued: the response time over the shortest one seen, which it measures again now and then |
+| `Gradient` | how much slower the latest call is than the long-run average, plus a few slots to grow into |
+| `Fixed` | never |
+
+Vegas is the default. A rule of your own implements `Adapt` and goes in through `Limiter::custom`.
+
 ## A run
 
 `moon run src/examples/limiters` offers one burst of forty calls every two seconds to a bucket, a sliding window and a period, all with a quota of twenty a second. The burst straddles the second boundary:
@@ -93,6 +116,9 @@ Each policy is a record with a preset of the same name. Copy it and change one f
 | `sre` | `k` 1.5 decaying to 1.1, protection 5, a probe after 1 s, 40 buckets over 10 s |
 | `shed` | 50 buckets over 5 s, CPU threshold 900‰, 1 s assumed response time, average weighted 0.9, 1 s to cool, never under 0.1 of capacity |
 | `backoff` | 3 attempts, 100 ms doubling to a 1 s cap, each wait spread by a fifth either way |
+| `aimd` | start at 20 within 20 and 200, keep 0.9 on a drop, a call over 5 s is a drop |
+| `vegas` | start at 20, at most 1000, no smoothing, alpha 3, beta 6, threshold and step 1, probe 30 |
+| `gradient` | start at 20 within 20 and 200, smoothing 0.2, 4 slots on top, a 600-call average, tolerance 1.5 |
 
 Durations are `@moondate.Span`, so the package brings `moondate` with it.
 

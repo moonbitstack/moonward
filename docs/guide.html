@@ -234,6 +234,30 @@ after one leaves, held 1, enter true</pre>
       </div>
       <div class="step__body">
         <p><code>leave</code> is safe to call more often than <code>enter</code> succeeded: it stops at zero rather than going negative.</p>
+        <p>A fixed number is a guess. <code>Limiter</code> finds the number: each call takes a lease, and how fast it comes back moves the limit. AIMD adds one while the limit is in use and keeps nine tenths after a timeout; Vegas and Gradient read the response time itself.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>adapt.mbt</b><span class="spacer"></span>AIMD from 20</div>
+        <pre class="code" data-lang="moonbit">let limiter = @moonward.Limiter::new(rule=Aimd(@moonward.aimd))
+let held = []
+while limiter.acquire(0L) is Some(lease) {
+  held.push(lease)
+}
+println("limit     \{limiter.limit()}, in flight \{limiter.flying()}")
+for lease in held {
+  lease.pass(ms(10L))
+}
+println("after 20 fast calls, limit \{limiter.limit()}")
+for _ in 0..&lt;3 {
+  limiter.acquire(ms(10L)).unwrap().fail(ms(5010L))
+}
+println("after 3 timeouts, limit \{limiter.limit()}")</pre>
+        <pre class="out">limit     20, in flight 20
+after 20 fast calls, limit 31
+after 3 timeouts, limit 21</pre>
+      </div>
+      <div class="step__body">
+        <p>Settle every lease once: <code>pass</code> when the call came back, <code>fail</code> on a timeout or an overload reply, <code>ignore</code> when the answer says nothing about load. A rule of your own implements <code>Adapt</code> and goes in through <code>Limiter::custom</code>.</p>
       </div>
     </section>
 
