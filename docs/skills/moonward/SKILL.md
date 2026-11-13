@@ -1,6 +1,6 @@
 ---
 name: moonward
-description: "Decide whether a call should go ahead, in MoonBit with moonbitstack/moonward: a circuit breaker in the style of Google SRE, adaptive load shedding, an adaptive concurrency limit (AIMD, Vegas, Gradient), token bucket, sliding window and fixed-period limiters, a concurrency gate, retry backoff with jitter, and deadlines. Nothing reads a clock or a random source; the caller passes both. Use when adding retries, rate limits, timeouts or overload protection to a client or a server."
+description: "Decide whether a call should go ahead, in MoonBit with moonbitstack/moonward: a circuit breaker in the style of Google SRE, adaptive load shedding, an adaptive concurrency limit (AIMD, Vegas, Gradient), token bucket (also with its count in a store several processes share), sliding window and fixed-period limiters, a concurrency gate, retry backoff with jitter, and deadlines. Nothing reads a clock or a random source; the caller passes both. Use when adding retries, rate limits, timeouts or overload protection to a client or a server."
 ---
 
 # moonward
