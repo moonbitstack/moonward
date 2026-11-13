@@ -64,11 +64,12 @@ pub fn Breaker::ratio(Self, Int64) -> Double
 pub struct Bucket {
   rate : Double
   burst : Double
-  mut tokens : Double
-  mut at : Int64
+  mut state : Tokens
 }
 pub fn Bucket::new(Double, burst? : Double, now? : Int64) -> Self
 pub fn Bucket::next(Self, Int64, n? : Double) -> @moondate.Span
+pub fn Bucket::opening(Self, Int64) -> Tokens
+pub fn Bucket::step(Self, Tokens, Int64, n? : Double) -> Grant
 pub fn Bucket::take(Self, Int64, n? : Double) -> Bool
 pub fn Bucket::tokens(Self, Int64) -> Double
 
@@ -103,6 +104,16 @@ pub fn Gradient::equal(Self, Self) -> Bool
 pub fn Gradient::new(initial? : Int32, min? : Int32, max? : Int32, smoothing? : Double, queue? : Int32, window? : Int32, tolerance? : Double) -> Self
 pub fn Gradient::not_equal(Self, Self) -> Bool
 pub fn Gradient::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Grant {
+  granted : Bool
+  state : Tokens
+  wait : @moondate.Span
+}
+pub fn Grant::equal(Self, Self) -> Bool
+pub fn Grant::not_equal(Self, Self) -> Bool
+pub fn Grant::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
 pub(all) enum Jitter {
@@ -265,6 +276,15 @@ pub struct Ticket {
 }
 pub fn Ticket::fail(Self) -> Unit
 pub fn Ticket::pass(Self, Int64) -> Unit
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Tokens {
+  tokens : Double
+  at : Int64
+}
+pub fn Tokens::equal(Self, Self) -> Bool
+pub fn Tokens::not_equal(Self, Self) -> Bool
+pub fn Tokens::to_repr(Self) -> @debug.Repr
 
 #derive(Default, Eq, @debug.Debug)
 pub struct Total {

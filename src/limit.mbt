@@ -13,9 +13,47 @@
 pub struct Bucket {
   rate : Double
   burst : Double
-  mut tokens : Double
-  mut at : Int64
+  mut state : Tokens
 }
+
+///|
+/// What a bucket holds at one instant: the tokens, and when they were last
+/// brought up to date.
+///
+/// This is the bucket apart from its policy and its clock, which is what two
+/// processes sharing one allowance have to agree on. See [`Bucket::step`].
+#derive(Eq, Debug)
+pub(all) struct Tokens {
+  /// How many tokens are in the bucket.
+  tokens : Double
+  /// The clock reading `tokens` was brought up to date at.
+  at : Int64
+}
+
+///|
+pub extend Tokens with Debug::{to_repr}
+
+///|
+pub extend Tokens with Eq::{not_equal, equal}
+
+///|
+/// What one call gets: whether it may go ahead, what the bucket holds afterwards,
+/// and how long a refused call has to wait.
+#derive(Eq, Debug)
+pub(all) struct Grant {
+  /// Whether the call may go ahead.
+  granted : Bool
+  /// The state to keep, whether the call went through or not.
+  state : Tokens
+  /// Zero when granted; otherwise how long until the same call would be granted.
+  wait : @moondate.Span
+}
+
+///|
+pub extend Grant with Debug::{to_repr}
+
+///|
+pub extend Grant with Eq::{not_equal, equal}
 
 ///|
 /// A bucket that starts full, which is what lets the first burst through.
@@ -33,7 +71,20 @@ pub fn Bucket::new(
   now~ : Int64 = 0L,
 ) -> Bucket {
   let cap = if burst > 0.0 { burst } else if rate > 1.0 { rate } else { 1.0 }
-  { rate, burst: cap, tokens: cap, at: now, }
+  { rate, burst: cap, state: { tokens: cap, at: now, }, }
+}
+
+///|
+/// The state a bucket that has seen no traffic is in at `now`: full, so the first
+/// burst goes through.
+///
+/// This is what a shared store writes when the key is missing, which is the same
+/// state [`Bucket::new`] starts from.
+///
+/// # Parameters
+/// - `now` : the caller's clock reading, in nanoseconds
+pub fn Bucket::opening(self : Bucket, now : Int64) -> Tokens {
+  { tokens: self.burst, at: now, }
 }
 
 ///|
@@ -41,14 +92,11 @@ pub fn Bucket::new(
 ///
 /// # Parameters
 /// - `now` : the caller's clock reading, in nanoseconds
-/// - `n` : how many tokens the call costs, one by default
+/// - `n` : how many tokens the call costs, one by default; a negative cost is taken as zero
 pub fn Bucket::take(self : Bucket, now : Int64, n~ : Double = 1.0) -> Bool {
-  self.fill(now)
-  if self.tokens >= n {
-    self.tokens = self.tokens - n
-    return true
-  }
-  false
+  let grant = self.step(self.state, now, n~)
+  self.state = grant.state
+  grant.granted
 }
 
 ///|
@@ -65,17 +113,7 @@ pub fn Bucket::next(
   now : Int64,
   n~ : Double = 1.0,
 ) -> @moondate.Span {
-  self.fill(now)
-  if self.tokens >= n {
-    return @moondate.Span::new()
-  }
-  if self.rate <= 0.0 {
-    // Nothing accrues, so the wait is unbounded; a caller is better told a very
-    // long time than a zero it would spin on.
-    return @moondate.Span::new(days=365L)
-  }
-  let short = n - self.tokens
-  { nanos: (short / self.rate * 1.0e9).to_int64(), }
+  self.step(self.state, now, n~).wait
 }
 
 ///|
@@ -84,22 +122,56 @@ pub fn Bucket::next(
 /// # Parameters
 /// - `now` : the caller's clock reading, in nanoseconds
 pub fn Bucket::tokens(self : Bucket, now : Int64) -> Double {
-  self.fill(now)
-  self.tokens
+  self.step(self.state, now, n=0.0).state.tokens
 }
 
 ///|
-/// Accrue whatever the elapsed time is worth, up to the burst.
-fn Bucket::fill(self : Bucket, now : Int64) -> Unit {
-  if now <= self.at {
-    return
+/// Answer one call against `state` at `now`, leaving the bucket untouched.
+///
+/// This is the whole of the arithmetic, and the seam for a bucket shared by
+/// several processes: read the state out of the store — [`Bucket::opening`] when
+/// the key is missing — ask here, and write `grant.state` back only if the stored
+/// value has not changed in between; on a clash, read again and ask again. The
+/// compare-and-set is what stops two writers from spending the same token, since
+/// an answer is only true of the state it was computed from. Token counts are
+/// fractional, so a store that rounds them to an integer loses the point of the
+/// bucket.
+///
+/// # Parameters
+/// - `state` : the bucket's state as the store has it
+/// - `now` : the caller's clock reading, in nanoseconds
+/// - `n` : how many tokens the call costs, one by default; a negative cost is taken as zero
+pub fn Bucket::step(
+  self : Bucket,
+  state : Tokens,
+  now : Int64,
+  n~ : Double = 1.0,
+) -> Grant {
+  let n = if n < 0.0 { 0.0 } else { n }
+  let mut tokens = state.tokens
+  let mut at = state.at
+  if now > at {
+    let elapsed = (now - at).to_double() / 1.0e9
+    tokens = tokens + elapsed * self.rate
+    if tokens > self.burst {
+      tokens = self.burst
+    }
+    at = now
   }
-  let elapsed = (now - self.at).to_double() / 1.0e9
-  self.tokens = self.tokens + elapsed * self.rate
-  if self.tokens > self.burst {
-    self.tokens = self.burst
+  let granted = tokens >= n
+  if granted {
+    tokens = tokens - n
   }
-  self.at = now
+  let wait = if granted {
+    @moondate.Span::new()
+  } else if self.rate <= 0.0 {
+    // Nothing accrues, so the wait is unbounded; a caller is better told a very
+    // long time than a zero it would spin on.
+    @moondate.Span::new(days=365L)
+  } else {
+    { nanos: ((n - tokens) / self.rate * 1.0e9).to_int64(), }
+  }
+  { granted, state: { tokens, at, }, wait, }
 }
 
 ///|
@@ -163,6 +235,11 @@ pub fn Sliding::left(self : Sliding, now : Int64) -> Int32 {
 /// - `now` : the caller's clock reading, in nanoseconds
 pub fn Sliding::next(self : Sliding, now : Int64) -> @moondate.Span {
   self.forget(now)
+  if self.quota < 1 {
+    // A quota of zero admits nothing, so no stretch of waiting is enough; a
+    // caller is better told a very long time than a zero it would spin on.
+    return @moondate.Span::new(days=365L)
+  }
   if self.stamps.length() < self.quota {
     return @moondate.Span::new()
   }

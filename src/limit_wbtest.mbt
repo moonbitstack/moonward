@@ -163,3 +163,70 @@ test "asking about a period does not open one" {
   assert_eq(p.take(sec(5L)), Under)
   assert_eq(p.next(sec(5L)), @moondate.Span::new(seconds=10L))
 }
+
+///|
+test "asking about a bucket spends nothing" {
+  let b = Bucket::new(1.0, burst=1.0)
+  let before = b.state
+  // The two readings fetch a copy of the state rather than moving the bucket on.
+  assert_eq(b.next(0L).nanos, 0L)
+  assert_eq(b.tokens(sec(1L)), 1.0)
+  assert_eq(b.state, before)
+  // And the state they were read from answers the next call the same way taking
+  // it would.
+  assert_eq(b.step(before, 0L).granted, true)
+  assert_eq(b.take(0L), true)
+}
+
+///|
+test "a store with no key starts where a new bucket starts" {
+  let b = Bucket::new(4.0, now=sec(3L))
+  assert_eq(b.opening(sec(3L)), b.state)
+  // Wherever the store is asked, an opening bucket is full.
+  assert_eq(b.opening(sec(9L)).tokens, 4.0)
+}
+
+///|
+test "a write that lost a race is asked again rather than counted twice" {
+  let bucket = Bucket::new(1.0, burst=2.0)
+  // One slot and a version, which only a compare-and-set moves.
+  let slot : Array[Tokens?] = [None]
+  let version : Array[Int32] = [0]
+  // Two processes read the same state, two tokens, and both ask.
+  let seen = version[0]
+  let first = bucket.step(bucket.opening(0L), 0L)
+  let second = bucket.step(bucket.opening(0L), 0L)
+  assert_eq(first.granted, true)
+  assert_eq(second.granted, true)
+  // The first writes back, so the second's version no longer matches.
+  slot[0] = Some(first.state)
+  version[0] = 1
+  assert_eq(version[0] == seen, false)
+  // Asked again against what the store holds, the second takes the one token
+  // that is left rather than a copy of the one already spent.
+  let again = bucket.step(slot[0].unwrap(), 0L)
+  assert_eq(again.granted, true)
+  assert_eq(again.state.tokens, 0.0)
+  slot[0] = Some(again.state)
+  assert_eq(bucket.step(slot[0].unwrap(), 0L).granted, false)
+}
+
+///|
+test "a cost below zero takes nothing and hands nothing out" {
+  let b = Bucket::new(1.0, burst=1.0)
+  assert_eq(b.take(0L), true)
+  assert_eq(b.tokens(0L), 0.0)
+  // A subtraction alone would credit the bucket four tokens here.
+  assert_eq(b.take(0L, n=-4.0), true)
+  assert_eq(b.tokens(0L), 0.0)
+}
+
+///|
+test "a window with no quota admits nothing and never says when" {
+  let w = Sliding::new(0, @moondate.Span::new(seconds=1L))
+  assert_eq(w.take(0L), false)
+  assert_eq(w.left(0L), 0)
+  // A year rather than a zero a caller would spin on.
+  assert_eq(w.next(0L), @moondate.Span::new(days=365L))
+}
+
