@@ -230,3 +230,60 @@ test "a window with no quota admits nothing and never says when" {
   assert_eq(w.next(0L), @moondate.Span::new(days=365L))
 }
 
+///|
+/// Two numbers within a rounding of the arithmetic that produced them.
+fn near(a : Double, b : Double) -> Bool {
+  let d = a - b
+  (if d < 0.0 { -d } else { d }) <= 1.0e-9
+}
+
+///|
+/// Replay one set of vectors: every decision must match exactly, and every token
+/// count to within a rounding, since the reference got there by another path.
+fn replay_buckets(cases : Array[BucketVector]) -> Unit raise {
+  for c in cases {
+    let b = Bucket::new(c.rate, burst=c.burst)
+    for i = 0; i < c.times.length(); i = i + 1 {
+      let granted = b.take(c.times[i], n=c.costs[i])
+      if granted != c.granted[i] {
+        fail(
+          "a bucket of " +
+          c.rate.to_string() +
+          " per second and " +
+          c.burst.to_string() +
+          " burst, call " +
+          i.to_string() +
+          ": granted " +
+          granted.to_string() +
+          ", the reference granted " +
+          c.granted[i].to_string(),
+        )
+      }
+      let left = b.tokens(c.times[i])
+      if !near(left, c.tokens[i]) {
+        fail(
+          "a bucket of " +
+          c.rate.to_string() +
+          " per second and " +
+          c.burst.to_string() +
+          " burst, call " +
+          i.to_string() +
+          ": left " +
+          left.to_string() +
+          ", the reference left " +
+          c.tokens[i].to_string(),
+        )
+      }
+    }
+  }
+}
+
+///|
+test "a bucket refilled between calls answers as the reference does" {
+  replay_buckets(bucket_vectors_continuous())
+}
+
+///|
+test "a bucket refilled a tick at a time answers as the reference does" {
+  replay_buckets(bucket_vectors_ticked())
+}

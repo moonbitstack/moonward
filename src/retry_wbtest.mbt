@@ -131,3 +131,36 @@ test "the three ways of building a backoff agree" {
   assert_eq(named, updated)
   assert_eq(named.schedule(), updated.schedule())
 }
+
+///|
+test "the schedule matches a reference that multiplies each wait forward" {
+  for c in backoff_vectors_iterated() {
+    let b = Backoff::new(
+      base=@moondate.Span::new(nanos=c.base),
+      factor=c.factor,
+      cap=@moondate.Span::new(nanos=c.cap),
+    )
+    for i = 0; i < c.waits.length(); i = i + 1 {
+      assert_eq(b.ceiling(i + 1).nanos, c.waits[i])
+    }
+  }
+}
+
+///|
+test "the schedule matches a reference that raises the factor to the attempt" {
+  for c in backoff_vectors_powered() {
+    let b = Backoff::new(
+      base=@moondate.Span::new(nanos=c.base),
+      factor=c.factor,
+      cap=@moondate.Span::new(nanos=c.cap),
+    )
+    for i = 0; i < c.waits.length(); i = i + 1 {
+      // Raising a power and multiplying forward part company in the last
+      // nanosecond of a float; the schedule is the same one.
+      let got = b.ceiling(i + 1).nanos
+      let want = c.waits[i]
+      let gap = if got > want { got - want } else { want - got }
+      assert_true(gap <= 1L)
+    }
+  }
+}
