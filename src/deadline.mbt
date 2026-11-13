@@ -32,13 +32,21 @@ pub fn Deadline::expired(self : Deadline, now : Int64) -> Bool {
 }
 
 ///|
-/// What is left of the budget at `now`, never negative. `None` when there is no
-/// budget, which has no finite remainder.
+/// What is left of the budget at `now`, never negative and never more than the
+/// budget itself, which a clock that moved backwards would otherwise report.
+/// `None` when there is no budget, which has no finite remainder.
 ///
 /// # Parameters
 /// - `now` : the caller's clock reading, in nanoseconds
 pub fn Deadline::remaining(self : Deadline, now : Int64) -> @moondate.Span? {
   guard self.budget > 0L else { None }
   let left = self.budget - (now - self.start)
-  Some({ nanos: if left < 0L { 0L } else { left }, })
+  let left = if left < 0L {
+    0L
+  } else if left > self.budget {
+    self.budget
+  } else {
+    left
+  }
+  Some({ nanos: left, })
 }

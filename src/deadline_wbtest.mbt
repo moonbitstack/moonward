@@ -18,3 +18,11 @@ test "a budget of zero or less never expires" {
   let n = Deadline::start(@moondate.Span::new(seconds=-1L), 0L)
   assert_eq(n.expired(sec(5L)), false)
 }
+
+///|
+test "a clock that moves backwards does not hand back more than the budget" {
+  let d = Deadline::start(@moondate.Span::new(seconds=2L), sec(10L))
+  // Reading before the deadline started is still a whole budget, not more.
+  assert_eq(d.remaining(sec(8L)), Some(@moondate.Span::new(seconds=2L)))
+  assert_eq(d.remaining(sec(0L)), Some(@moondate.Span::new(seconds=2L)))
+}
