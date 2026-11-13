@@ -75,6 +75,35 @@ fn admit(bucket : @moonward.Bucket, now : Int64) -> Result[Unit, Int64] {
 
 `Bucket::new(rate, burst=8.0)` takes `rate` tokens a second and holds at most `burst`. `Sliding` counts a quota over any window-long stretch, `Period` over fixed periods, and `Gate` only how many are in flight (`enter`, `leave`).
 
+## One bucket, several processes
+
+```moonbit
+fn take_shared(
+  bucket : @moonward.Bucket,
+  load : () -> @moonward.Tokens,
+  swap : (@moonward.Tokens, @moonward.Tokens) -> Bool,
+  now : Int64,
+) -> Bool {
+  let mut spent = false
+  let mut retry = true
+  while retry {
+    retry = false
+    let state = load()
+    let grant = bucket.step(state, now)
+    if !grant.granted {
+      spent = false
+    } else if swap(state, grant.state) {
+      spent = true
+    } else {
+      retry = true
+    }
+  }
+  spent
+}
+```
+
+`step` answers against a state the store holds and hands the next one back; `swap` is the compare-and-set that writes it only if nothing else wrote first, and a lost race is asked again rather than counted. A key that is not there starts at `bucket.opening(now)`. Keep the count fractional.
+
 ## A concurrency limit that adapts
 
 ```moonbit

@@ -91,6 +91,23 @@ assert_eq(limiter.limit(), 20)
 
 Vegas is the default. A rule of your own implements `Adapt` and goes in through `Limiter::custom`.
 
+## One allowance, several processes
+
+A bucket is two numbers — the tokens it holds and the moment they were brought up to date — and `step` answers a call against that pair instead of a bucket of your own:
+
+```moonbit
+let bucket = @moonward.Bucket::new(10.0, burst=20.0)
+let stored = bucket.opening(0L)        // what a key that is not there starts as
+let grant = bucket.step(stored, 0L)
+if grant.granted {
+  // write grant.state back, if the row still holds `stored`
+}
+assert_eq(grant.state.tokens, 19.0)
+assert_eq(grant.wait.nanos, 0L)
+```
+
+`grant.state` goes into the store only when the row still holds what was read — a compare-and-set, a transaction, or the script a Redis client runs — and a caller that lost the race reads again and asks again. That is the whole of it: the count is fractional, so the store has to keep it as a number rather than an integer.
+
 ## A run
 
 `moon run src/examples/limiters` offers one burst of forty calls every two seconds to a bucket, a sliding window and a period, all with a quota of twenty a second. The burst straddles the second boundary:

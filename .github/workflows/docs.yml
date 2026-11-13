@@ -42,7 +42,8 @@ jobs:
           moon info --target all
           git diff --exit-code src/pkg.generated.mbti
           python3 scripts/gen_api.py
-          git diff --exit-code docs/api.html
+          python3 scripts/sync_version.py
+          git diff --exit-code docs
           moon build --target js --release src/examples/browser
           cp _build/js/release/build/examples/browser/browser.js docs/assets/moonward.js
 

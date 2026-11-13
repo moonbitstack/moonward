@@ -38,7 +38,7 @@
     <a class="rail__git" href="https://github.com/moonbitstack/moonward" aria-label="Repository on GitHub">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
     </a>
-    <span class="rail__ver">v0.2.0</span>
+    <span class="rail__ver">v0.2.3</span>
   </div>
 </nav>
 
@@ -65,7 +65,7 @@
       <ul class="idx">
 <li><a href="#g01"><i>01</i>The breaker</a><ul class="idx__types"><li><a href="#Sre">Sre</a></li><li><a href="#Breaker">Breaker</a></li><li><a href="#Promise">Promise</a></li></ul></li>
 <li><a href="#g02"><i>02</i>Load shedding</a><ul class="idx__types"><li><a href="#Shed">Shed</a></li><li><a href="#Shedder">Shedder</a></li><li><a href="#Ticket">Ticket</a></li></ul></li>
-<li><a href="#g03"><i>03</i>Rate and quota</a><ul class="idx__types"><li><a href="#Bucket">Bucket</a></li><li><a href="#Sliding">Sliding</a></li><li><a href="#Period">Period</a></li><li><a href="#Quota">Quota</a></li></ul></li>
+<li><a href="#g03"><i>03</i>Rate and quota</a><ul class="idx__types"><li><a href="#Bucket">Bucket</a></li><li><a href="#Tokens">Tokens</a></li><li><a href="#Grant">Grant</a></li><li><a href="#Sliding">Sliding</a></li><li><a href="#Period">Period</a></li><li><a href="#Quota">Quota</a></li></ul></li>
 <li><a href="#g04"><i>04</i>Concurrency</a><ul class="idx__types"><li><a href="#Gate">Gate</a></li></ul></li>
 <li><a href="#g05"><i>05</i>Retry</a><ul class="idx__types"><li><a href="#Backoff">Backoff</a></li><li><a href="#Jitter">Jitter</a></li></ul></li>
 <li><a href="#g06"><i>06</i>Time</a><ul class="idx__types"><li><a href="#Deadline">Deadline</a></li></ul></li>
@@ -258,10 +258,24 @@ drop ×= (size - working) / size</pre>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>n</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">1.0</code></td><td class="pdoc">how many tokens are wanted, one by default</td></tr></tbody></table>
 </article>
 
+<article class="fn" id="Bucket-opening" data-name="bucket::opening">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::opening(self : <span class="ty">Bucket</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Tokens</span></code></div>
+  <div class="fn__doc"><p>The state a bucket that has seen no traffic is in at <code>now</code>: full, so the first burst goes through.</p>
+<p>This is what a shared store writes when the key is missing, which is the same state <a class="ref" href="#Bucket::new"><code>Bucket::new</code></a> starts from.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Bucket-step" data-name="bucket::step">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::step(self : <span class="ty">Bucket</span>,&#8203; state : <span class="ty">Tokens</span>,&#8203; now : <span class="ty">Int64</span>,&#8203; n~ : <span class="ty">Double</span> = <span class="nu">1.0</span>) -&gt; <span class="ty">Grant</span></code></div>
+  <div class="fn__doc"><p>Answer one call against <code>state</code> at <code>now</code>, leaving the bucket untouched.</p>
+<p>This is the whole of the arithmetic, and the seam for a bucket shared by several processes: read the state out of the store — <a class="ref" href="#Bucket::opening"><code>Bucket::opening</code></a> when the key is missing — ask here, and write <code>grant.state</code> back only if the stored value has not changed in between; on a clash, read again and ask again. The compare-and-set is what stops two writers from spending the same token, since an answer is only true of the state it was computed from. Token counts are fractional, so a store that rounds them to an integer loses the point of the bucket.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>state</code></td><td class="ptype"><code>Tokens</code></td><td class="pdef">—</td><td class="pdoc">the bucket's state as the store has it</td></tr><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>n</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">1.0</code></td><td class="pdoc">how many tokens the call costs, one by default; a negative cost is taken as zero</td></tr></tbody></table>
+</article>
+
 <article class="fn" id="Bucket-take" data-name="bucket::take">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::take(self : <span class="ty">Bucket</span>,&#8203; now : <span class="ty">Int64</span>,&#8203; n~ : <span class="ty">Double</span> = <span class="nu">1.0</span>) -&gt; <span class="ty">Bool</span></code></div>
   <div class="fn__doc"><p>Whether <code>n</code> tokens are available now, taking them if they are.</p></div>
-  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>n</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">1.0</code></td><td class="pdoc">how many tokens the call costs, one by default</td></tr></tbody></table>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>n</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">1.0</code></td><td class="pdoc">how many tokens the call costs, one by default; a negative cost is taken as zero</td></tr></tbody></table>
 </article>
 
 <article class="fn" id="Bucket-tokens" data-name="bucket::tokens">
@@ -270,6 +284,25 @@ drop ×= (size - working) / size</pre>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
 </article>
 </div>
+</article>
+<article class="api" id="Tokens" data-name="tokens">
+<header class="api__head">
+  <h3 class="api__name">Tokens</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>What a bucket holds at one instant: the tokens, and when they were last brought up to date.</p>
+<p>This is the bucket apart from its policy and its clock, which is what two processes sharing one allowance have to agree on. See <a class="ref" href="#Bucket::step"><code>Bucket::step</code></a>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>tokens</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How many tokens are in the bucket.</td></tr><tr><td class="pname"><code>at</code></td><td class="ptype"><code>Int64</code></td><td class="pdoc">The clock reading <code>tokens</code> was brought up to date at.</td></tr></tbody></table>
+</article>
+<article class="api" id="Grant" data-name="grant">
+<header class="api__head">
+  <h3 class="api__name">Grant</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>What one call gets: whether it may go ahead, what the bucket holds afterwards, and how long a refused call has to wait.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>granted</code></td><td class="ptype"><code>Bool</code></td><td class="pdoc">Whether the call may go ahead.</td></tr><tr><td class="pname"><code>state</code></td><td class="ptype"><code>Tokens</code></td><td class="pdoc">The state to keep, whether the call went through or not.</td></tr><tr><td class="pname"><code>wait</code></td><td class="ptype"><code>@moondate.Span</code></td><td class="pdoc">Zero when granted; otherwise how long until the same call would be granted.</td></tr></tbody></table>
 </article>
 <article class="api" id="Sliding" data-name="sliding">
 <header class="api__head">
@@ -473,7 +506,7 @@ drop ×= (size - working) / size</pre>
 
 <article class="fn" id="Deadline-remaining" data-name="deadline::remaining">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Deadline</span>::remaining(self : <span class="ty">Deadline</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span>?</code></div>
-  <div class="fn__doc"><p>What is left of the budget at <code>now</code>, never negative. <code>None</code> when there is no budget, which has no finite remainder.</p></div>
+  <div class="fn__doc"><p>What is left of the budget at <code>now</code>, never negative and never more than the budget itself, which a clock that moved backwards would otherwise report. <code>None</code> when there is no budget, which has no finite remainder.</p></div>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
 </article>
 
@@ -760,7 +793,7 @@ drop ×= (size - working) / size</pre>
 </div>
 
 <footer class="foot shell">
-  <span>moonward 0.2.0</span>
+  <span>moonward 0.2.3</span>
   <span>Apache-2.0</span>
   <a href="https://github.com/moonbitstack/moonward">GitHub</a>
   <a href="https://mooncakes.io/docs/moonbitstack/moonward">mooncakes</a>

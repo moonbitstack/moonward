@@ -38,7 +38,7 @@
     <a class="rail__git" href="https://github.com/moonbitstack/moonward" aria-label="Repository on GitHub">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
     </a>
-    <span class="rail__ver">v0.2.0</span>
+    <span class="rail__ver">v0.2.3</span>
   </div>
 </nav>
 
@@ -46,10 +46,10 @@
   <div class="doc-head__meta">
     <span class="tag">Guide</span>
     <span class="tag">one program</span>
-    <span class="tag">ten stations</span>
+    <span class="tag">eleven stations</span>
   </div>
   <h1 class="doc-head__title">The whole library,<br><em>once</em></h1>
-  <p class="doc-head__lede">Ten steps from an empty project to a rolling window of your own. Every block below is a stretch of one program, and the lines under it are what that program printed — unedited, integers and all.</p>
+  <p class="doc-head__lede">Eleven steps from an empty project to a rolling window of your own. Every block below is a stretch of one program, and the lines under it are what that program printed — unedited, integers and all.</p>
   <div class="doc-head__cmd">
     <span class="mono">moon run src/examples/guide</span>
     <a class="tag tag--hot" href="https://github.com/moonbitstack/moonward/blob/master/src/examples/guide/main.mbt">the file itself →</a>
@@ -72,8 +72,9 @@
         <li><a href="#s07" data-toc><i>07</i> Load</a></li>
         <li><a href="#s08" data-toc><i>08</i> Waiting</a></li>
         <li><a href="#s09" data-toc><i>09</i> A budget</a></li>
-        <li><a href="#s10" data-toc><i>10</i> A window</a></li>
-        <li><a href="#s11" data-toc><i>11</i> Next</a></li>
+        <li><a href="#s10" data-toc><i>10</i> One allowance</a></li>
+        <li><a href="#s11" data-toc><i>11</i> A window</a></li>
+        <li><a href="#s12" data-toc><i>12</i> Next</a></li>
       </ol>
     </div>
   </aside>
@@ -90,7 +91,7 @@
       </div>
       <div class="screen">
         <div class="screen__bar"><b>terminal</b><span class="spacer"></span>one line</div>
-        <pre class="code" data-lang="shell">moon add moonbitstack/moonward@0.2.1</pre>
+        <pre class="code" data-lang="shell">moon add moonbitstack/moonward@0.2.3</pre>
       </div>
       <div class="step__body">
         <p>The package is imported as <code>@moonward</code>. Nothing else is needed: there is no configuration, no runtime, no global to install.</p>
@@ -351,6 +352,40 @@ left      500 ms</pre>
     <section class="step" id="s10" data-station>
       <header class="step__head">
         <span class="step__no">10</span>
+        <h2 class="step__t">One allowance, two processes</h2>
+      </header>
+      <div class="step__body">
+        <p>A bucket keeps two numbers: how many tokens it holds, and when they were last brought up to date. That pair fits in a row of any store, which is all two processes need to share one allowance. The arithmetic is <code>step</code>: it answers a call against a state you hand it, and hands the next state back.</p>
+      </div>
+      <div class="screen">
+        <div class="screen__bar"><b>shared.mbt</b><span class="spacer"></span>two writers, one allowance</div>
+        <pre class="code" data-lang="moonbit">let bucket = @moonward.Bucket::new(2.0, burst=4.0)
+let store : Array[@moonward.Tokens?] = [None]
+let version : Array[Int] = [0]
+let seen = version[0]
+let first = bucket.step(bucket.opening(0L), 0L)
+let second = bucket.step(bucket.opening(0L), 0L)
+if version[0] == seen {
+  store[0] = Some(first.state)
+  version[0] = version[0] + 1
+}
+let again = bucket.step(store[0].unwrap(), 0L)
+println("both read   \{first.granted} \{second.granted}, \{first.state.tokens} tokens each")
+println("wrote       \{store[0].unwrap().tokens} tokens left, version \{version[0]}")
+println("changed     \{version[0] != seen}, so the second asks again: \{again.state.tokens} left")</pre>
+        <pre class="out">both read   true true, 3 tokens each
+wrote       3 tokens left, version 1
+changed     true, so the second asks again: 2 left</pre>
+      </div>
+      <div class="step__body">
+        <p>Both calls read four tokens and both were told yes, but only one of them may act on it. The first writes back under the version it read; the second's write no longer matches, so its answer is stale and the call is asked again, this time against three tokens. What makes the pair safe is a store that swaps the value only when the version still matches — a compare-and-set, a transaction, or the script a Redis client runs — and a store that rounds the count to a whole number throws away the fraction a slow rate lives on.</p>
+        <p><code>opening</code> is the state a key that is not there starts in: a full bucket at the clock reading you give it, which is the state <code>new</code> starts from too.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s11" data-station>
+      <header class="step__head">
+        <span class="step__no">11</span>
         <h2 class="step__t">A window of your own</h2>
       </header>
       <div class="step__body">
@@ -382,9 +417,9 @@ calls     10 inside the window</pre>
       </div>
     </section>
 
-    <section class="step" id="s11" data-station>
+    <section class="step" id="s12" data-station>
       <header class="step__head">
-        <span class="step__no">11</span>
+        <span class="step__no">12</span>
         <h2 class="step__t">Next</h2>
       </header>
       <div class="step__body">
@@ -425,7 +460,7 @@ calls     10 inside the window</pre>
 </div>
 
 <footer class="foot shell">
-  <span>moonward 0.2.0</span>
+  <span>moonward 0.2.3</span>
   <span>Apache-2.0</span>
   <a href="https://github.com/moonbitstack/moonward">GitHub</a>
   <a href="https://mooncakes.io/docs/moonbitstack/moonward">mooncakes</a>

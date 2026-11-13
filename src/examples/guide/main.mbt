@@ -32,6 +32,7 @@ fn main {
   station_8()
   station_9()
   station_10()
+  station_11()
 }
 
 ///|
@@ -199,9 +200,41 @@ fn station_9() -> Unit {
 }
 
 ///|
+/// One allowance, two processes: the arithmetic is asked about a state the
+/// store holds, and only a write that read that state may move it on.
+fn station_10() -> Unit {
+  let bucket = @moonward.Bucket::new(2.0, burst=4.0)
+  // What a shared store keeps between calls: the state, and a version that only
+  // the writer that read it may move.
+  let store : Array[@moonward.Tokens?] = [None]
+  let version : Array[Int32] = [0]
+  // Two calls arrive together and both read the same state, four tokens.
+  let seen = version[0]
+  let first = bucket.step(bucket.opening(0L), 0L)
+  let second = bucket.step(bucket.opening(0L), 0L)
+  // The first writes back. The second's answer was true of a state that no
+  // longer exists, so it has to ask again against what the store holds now.
+  if version[0] == seen {
+    store[0] = Some(first.state)
+    version[0] = version[0] + 1
+  }
+  let again = bucket.step(store[0].unwrap(), 0L)
+  println("--- 10  a shared allowance")
+  println(
+    "both read   \{first.granted} \{second.granted}, \{first.state.tokens} tokens each",
+  )
+  println(
+    "wrote       \{store[0].unwrap().tokens} tokens left, version \{version[0]}",
+  )
+  println(
+    "changed     \{version[0] != seen}, so the second asks again: \{again.state.tokens} left",
+  )
+}
+
+///|
 /// A window of our own bucket type: four buckets over four hundred
 /// milliseconds, filled by hand.
-fn station_10() -> Unit {
+fn station_11() -> Unit {
   let window : @moonward.Window[Hits] = @moonward.Window::new(
     size=4,
     window=@moondate.Span::new(millis=400L),
@@ -211,7 +244,7 @@ fn station_10() -> Unit {
   window.slot(ms(150L)).calls += 2
   let mut seen = 0L
   window.each(ms(150L), b => seen = seen + b.calls)
-  println("--- 10  a window of your own")
+  println("--- 11  a window of your own")
   println(
     "width     \{window.width().nanos / 1_000_000L} ms, \{window.size()} buckets",
   )
