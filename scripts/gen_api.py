@@ -713,7 +713,7 @@ def main() -> int:
     if not MBTI.exists():
         print(f"missing {MBTI}", file=sys.stderr)
         return 1
-    OUT.write_text(build(), encoding="utf-8")
+    OUT.write_text(build(), encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
     return 0
 

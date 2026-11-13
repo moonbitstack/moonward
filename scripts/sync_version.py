@@ -35,7 +35,7 @@ def main() -> int:
             r"(moon add moonbitstack/moonward@)[^\s<]*", rf"\g<1>{v}", out
         )
         if out != text:
-            page.write_text(out, encoding="utf-8")
+            page.write_text(out, encoding="utf-8", newline="\n")
             changed.append(page.name)
     print(f"version {v}: {', '.join(changed) if changed else 'every page already agrees'}")
     return 0
