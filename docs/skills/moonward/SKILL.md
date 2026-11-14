@@ -61,6 +61,8 @@ fn guarded(
 
 There is no open, half-open and closed: the breaker refuses each call with a probability that grows with the recent failures, so a struggling backend keeps getting a trickle of calls and recovers on its own.
 
+`breaker.call(clock, roll, f, acceptable?, fallback?)` does the allow, the call and the settling in one: a refusal raises `Unavailable` or returns `fallback`'s answer, and an error from `f` counts as a failure unless `acceptable` accepts it.
+
 ## A rate limit
 
 ```moonbit
@@ -104,6 +106,31 @@ fn take_shared(
 
 `step` answers against a state the store holds and hands the next one back; `swap` is the compare-and-set that writes it only if nothing else wrote first, and a lost race is asked again rather than counted. A key that is not there starts at `bucket.opening(now)`. Keep the count fractional.
 
+A quota per period is shared the same way: `period.step(usage, now)` counts one event against the `Usage` the store holds and returns `Counted { quota, state }`; a key that is not there starts at `period.opening()`.
+
+## Several limiters, and one per caller
+
+```moonbit
+fn admit_client(
+  per_client : @moonward.Partitioned[@moonward.Bucket],
+  global : @moonward.Chained,
+  client : String,
+  now : Int64,
+) -> Bool {
+  if !global.acquire(now) {
+    return false
+  }
+  if per_client.acquire(client, now) {
+    true
+  } else {
+    global.release(now)
+    false
+  }
+}
+```
+
+`Chained::new([bucket, gate])` gets past every limiter or none: a refusal gives back what the earlier ones gave. `Partitioned::new(make, limit=...)` keeps a limiter per key and drops the one used least recently. Any type that implements `Permit` (`acquire`, `release`) goes into either.
+
 ## A concurrency limit that adapts
 
 ```moonbit
@@ -114,7 +141,7 @@ fn call_backend(limiter : @moonward.Limiter, now : Int64, done_at : Int64) -> Bo
 }
 ```
 
-`Limiter::new()` runs Vegas from a limit of 20; `rule=Gradient(@moonward.gradient)` and `rule=Aimd(@moonward.aimd)` are the others. Settle every lease exactly once, or the limiter counts the call as in flight for ever.
+`Limiter::new()` runs Vegas from a limit of 20; `rule=Gradient(@moonward.gradient)`, `rule=Aimd(@moonward.aimd)` and the first gradient rule `rule=MinRtt(@moonward.min_rtt)` are the others. Settle every lease exactly once, or the limiter counts the call as in flight for ever.
 
 ## Things that catch people out
 

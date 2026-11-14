@@ -20,7 +20,7 @@ Every decision is a function of the numbers you pass in, so every sequence is re
 
 ## What it is
 
-Ten types that answer one question each: should this call go ahead.
+Twelve types that answer one question each: should this call go ahead.
 
 |  | Answers | Refuses when |
 |:--|:--|:--|
@@ -31,6 +31,8 @@ Ten types that answer one question each: should this call go ahead.
 | **`Sliding`** | Is it within a quota over any window-long stretch? | the count reaches the quota |
 | **`Period`** | Is it within a quota this period? | the count for the open period is spent |
 | **`Gate`** | Is there room right now? | `held` has reached `limit` — it never asks what time it is |
+| **`Chained`** | Does the call get past every limiter in a row? | any of them refuses; what the others gave is given back |
+| **`Partitioned`** | Is this caller within its own allowance? | the limiter kept for its key refuses |
 | **`Backoff`** | When to try again, and how long first? | `more(attempts)` is false |
 | **`Deadline`** | How much of the budget is left? | `expired` is true |
 | **`Window`** | What does the rolling window hold? | never; it is the array of buckets the others read |
@@ -60,6 +62,15 @@ drop ×= ( size − working ) / size
 
 `failing` and `working` are runs at the head of the window, not totals. A success pays for `k` calls — at the preset's 1.5, a backend is left alone until more than a third of its calls fail.
 
+`call` wraps a call in all of that. A refusal raises `Unavailable`, or answers with `fallback`; an error the call raises counts as a failure unless `acceptable` says it is the caller's own, a not found or a bad request:
+
+```moonbit
+let breaker = @moonward.Breaker::new()
+let clock = () => 0L
+let answer = breaker.call(clock, 0.42, () => 7, fallback=_ => 0) catch { _ => -1 }
+assert_eq(answer, 7)
+```
+
 ## The shedder
 
 A call is refused only when the server is both **hot** and **full**:
@@ -87,6 +98,7 @@ assert_eq(limiter.limit(), 20)
 | `Aimd` | one up while at least half of it is used, a tenth down on a drop or a call over the timeout |
 | `Vegas` | how many calls are queued: the response time over the shortest one seen, which it measures again now and then |
 | `Gradient` | how much slower the latest call is than the long-run average, plus a few slots to grow into |
+| `MinRtt` | how much slower the latest call is than the fastest since the last probe; every `probe` calls or so it drops to the queue size and measures the fastest again |
 | `Fixed` | never |
 
 Vegas is the default. A rule of your own implements `Adapt` and goes in through `Limiter::custom`.
@@ -107,6 +119,33 @@ assert_eq(grant.wait.nanos, 0L)
 ```
 
 `grant.state` goes into the store only when the row still holds what was read — a compare-and-set, a transaction, or the script a Redis client runs — and a caller that lost the race reads again and asks again. That is the whole of it: the count is fractional, so the store has to keep it as a number rather than an integer.
+
+A quota per period is shared the same way. Its state is when the open period started and how many events it has counted:
+
+```moonbit
+let daily = @moonward.Period::new(1000, @moondate.Span::new(days=1L), align=true)
+let counted = daily.step(daily.opening(), 0L)
+assert_eq(counted.quota, Under)
+assert_eq(counted.state.used, 1)
+```
+
+Two processes counting through one store spend one quota between them, and the count starts again for both when the period ends.
+
+## Limiters together
+
+Every limiter here can hand out one permit and take it back, which is the `Permit` trait. `Chained` asks several in a row and gives back what the earlier ones gave when a later one refuses, so a call that does not run spends nothing. `Partitioned` keeps one limiter per key, at most `limit` keys, dropping the one used least recently:
+
+```moonbit
+let per_client = @moonward.Partitioned::new(_ => @moonward.Bucket::new(5.0, burst=10.0))
+let both = @moonward.Chained::new([
+  @moonward.Bucket::new(100.0, burst=100.0),
+  @moonward.Gate::new(64),
+])
+assert_true(per_client.acquire("203.0.113.7", 0L))
+assert_true(both.acquire(0L))
+```
+
+A limiter of your own implements `Permit` and goes into either.
 
 ## A run
 

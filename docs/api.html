@@ -70,7 +70,7 @@
 <li><a href="#g05"><i>05</i>Retry</a><ul class="idx__types"><li><a href="#Backoff">Backoff</a></li><li><a href="#Jitter">Jitter</a></li></ul></li>
 <li><a href="#g06"><i>06</i>Time</a><ul class="idx__types"><li><a href="#Deadline">Deadline</a></li></ul></li>
 <li><a href="#g07"><i>07</i>Windows</a><ul class="idx__types"><li><a href="#Window">Window</a></li><li><a href="#Outcome">Outcome</a></li><li><a href="#Tally">Tally</a></li><li><a href="#Total">Total</a></li></ul></li>
-<li><a href="#gvalues"><i>08</i>Presets</a><ul class="idx__types"><li><a href="#aimd">aimd</a></li><li><a href="#backoff">backoff</a></li><li><a href="#gradient">gradient</a></li><li><a href="#shed">shed</a></li><li><a href="#sre">sre</a></li><li><a href="#vegas">vegas</a></li></ul></li>
+<li><a href="#gvalues"><i>08</i>Presets</a><ul class="idx__types"><li><a href="#aimd">aimd</a></li><li><a href="#backoff">backoff</a></li><li><a href="#gradient">gradient</a></li><li><a href="#min_rtt">min_rtt</a></li><li><a href="#partitions">partitions</a></li><li><a href="#shed">shed</a></li><li><a href="#sre">sre</a></li><li><a href="#vegas">vegas</a></li></ul></li>
       </ul>
     </div>
   </aside>
@@ -116,6 +116,13 @@ drop ×= (size - working) / size</pre>
   <div class="fn__doc"><p>Ask to make one call at <code>now</code>.</p>
 <p><code>roll</code> is a draw from <code>[0, 1)</code>; the call is refused when it falls under the drop fraction. <code>Some</code> means go ahead, and the caller settles the promise once the call has finished. A refusal is recorded as a <code>Drop</code>, so a breaker that is refusing never reads back as idle and throttles itself off.</p></div>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr><tr><td class="pname"><code>roll</code></td><td class="ptype"><code>Double</code></td><td class="pdef">—</td><td class="pdoc">a draw from <code>[0, 1)</code></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Breaker-call" data-name="breaker::call">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">T</span>] <span class="ty">Breaker</span>::call(self : <span class="ty">Breaker</span>,&#8203; now : () -&gt; <span class="ty">Int64</span>,&#8203; roll : <span class="ty">Double</span>,&#8203; f : () -&gt; <span class="ty">T</span> raise,&#8203; acceptable? : (<span class="ty">Error</span>) -&gt; <span class="ty">Bool</span>,&#8203; fallback? : (<span class="ty">Error</span>) -&gt; <span class="ty">T</span> raise) -&gt; <span class="ty">T</span> raise</code></div>
+  <div class="fn__doc"><p><code>f</code> through the breaker, which is go-zero's <code>Do</code> and its siblings in one call.</p>
+<p>A refusal raises <a class="ref" href="#Unavailable"><code>Unavailable</code></a>, or answers with <code>fallback</code> when one is given. An error from <code>f</code> is raised as it came, and counts against the breaker unless <code>acceptable</code> says it is the caller's business rather than the service's: a not found, a validation error.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>() -&gt; Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock, in nanoseconds; read before the call and again after it</td></tr><tr><td class="pname"><code>roll</code></td><td class="ptype"><code>Double</code></td><td class="pdef">—</td><td class="pdoc">a draw from <code>[0, 1)</code></td></tr><tr><td class="pname"><code>f</code></td><td class="ptype"><code>() -&gt; T raise</code></td><td class="pdef">—</td><td class="pdoc">the call</td></tr><tr><td class="pname"><code>acceptable?</code></td><td class="ptype"><code>(Error) -&gt; Bool</code></td><td class="pdef">—</td><td class="pdoc"></td></tr><tr><td class="pname"><code>fallback?</code></td><td class="ptype"><code>(Error) -&gt; T raise</code></td><td class="pdef">—</td><td class="pdoc"></td></tr><tr><td class="pname"><code>acceptable</code></td><td class="ptype">—</td><td class="pdef">—</td><td class="pdoc">which errors count as a success; none unless given</td></tr><tr><td class="pname"><code>fallback</code></td><td class="ptype">—</td><td class="pdef">—</td><td class="pdoc">the answer when the breaker refuses; <a class="ref" href="#Unavailable"><code>Unavailable</code></a> is raised unless given</td></tr></tbody></table>
 </article>
 
 <article class="fn" id="Breaker-new" data-name="breaker::new">
@@ -244,6 +251,12 @@ drop ×= (size - working) / size</pre>
 <p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
 <div class="fns">
 
+<article class="fn" id="Bucket-acquire" data-name="bucket::acquire">
+  <div class="fn__sig"><code><span class="ty">Bucket</span>::acquire(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
 <article class="fn" id="Bucket-new" data-name="bucket::new">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Bucket</span>::new(rate : <span class="ty">Double</span>,&#8203; burst~ : <span class="ty">Double</span> = <span class="nu">0.0</span>,&#8203; now~ : <span class="ty">Int64</span> = 0L) -&gt; <span class="ty">Bucket</span></code></div>
   <div class="fn__doc"><p>A bucket that starts full, which is what lets the first burst through.</p>
@@ -263,6 +276,12 @@ drop ×= (size - working) / size</pre>
   <div class="fn__doc"><p>The state a bucket that has seen no traffic is in at <code>now</code>: full, so the first burst goes through.</p>
 <p>This is what a shared store writes when the key is missing, which is the same state <a class="ref" href="#Bucket::new"><code>Bucket::new</code></a> starts from.</p></div>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Bucket-release" data-name="bucket::release">
+  <div class="fn__sig"><code><span class="ty">Bucket</span>::release(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
 </article>
 
 <article class="fn" id="Bucket-step" data-name="bucket::step">
@@ -316,6 +335,12 @@ drop ×= (size - working) / size</pre>
 <p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
 <div class="fns">
 
+<article class="fn" id="Sliding-acquire" data-name="sliding::acquire">
+  <div class="fn__sig"><code><span class="ty">Sliding</span>::acquire(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
 <article class="fn" id="Sliding-left" data-name="sliding::left">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sliding</span>::left(self : <span class="ty">Sliding</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Int32</span></code></div>
   <div class="fn__doc"><p>How many events remain in the current window.</p></div>
@@ -334,6 +359,12 @@ drop ×= (size - working) / size</pre>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
 </article>
 
+<article class="fn" id="Sliding-release" data-name="sliding::release">
+  <div class="fn__sig"><code><span class="ty">Sliding</span>::release(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
 <article class="fn" id="Sliding-take" data-name="sliding::take">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Sliding</span>::take(self : <span class="ty">Sliding</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Bool</span></code></div>
   <div class="fn__doc"><p>Whether an event is within the quota now, counting it if it is.</p></div>
@@ -349,9 +380,16 @@ drop ×= (size - working) / size</pre>
 </header>
 <div class="api__doc"><p>A fixed window counter: at most <code>quota</code> events per <code>period</code>, the count starting again when a period ends.</p>
 <p>Cheaper than <a class="ref" href="#Sliding"><code>Sliding</code></a>, which keeps every stamp, and coarser: a client can spend one quota at the end of a period and another at the start of the next, so forty events can pass in a second that allows twenty. That is the trade a fixed window makes, and the reason it is the cheap one.</p>
-<p>A period opens on the first event after the last one closed. With <code>align</code> it opens on a multiple of <code>period</code> on the caller's clock instead, so with a Unix clock a daily quota resets at midnight UTC rather than a day after first use.</p></div>
+<p>A period opens on the first event after the last one closed. With <code>align</code> it opens on a multiple of <code>period</code> on the caller's clock instead, so with a Unix clock a daily quota resets at midnight UTC rather than a day after first use.</p>
+<p>Several processes share one quota by keeping its <a class="ref" href="#Usage"><code>Usage</code></a> in a store and counting with <a class="ref" href="#Period::step"><code>Period::step</code></a>, as a <a class="ref" href="#Bucket"><code>Bucket</code></a> shares its tokens.</p></div>
 <p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
 <div class="fns">
+
+<article class="fn" id="Period-acquire" data-name="period::acquire">
+  <div class="fn__sig"><code><span class="ty">Period</span>::acquire(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
 
 <article class="fn" id="Period-left" data-name="period::left">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::left(self : <span class="ty">Period</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Int32</span></code></div>
@@ -369,6 +407,25 @@ drop ×= (size - working) / size</pre>
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::next(self : <span class="ty">Period</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">@moondate.<span class="ty">Span</span></span></code></div>
   <div class="fn__doc"><p>How long until the current period ends. Zero when no period is open, because the next event would open one.</p></div>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Period-opening" data-name="period::opening">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::opening(self : <span class="ty">Period</span>) -&gt; <span class="ty">Usage</span></code></div>
+  <div class="fn__doc"><p>The state of a period no event has touched: what a store with no entry for the key stands for.</p></div>
+  
+</article>
+
+<article class="fn" id="Period-release" data-name="period::release">
+  <div class="fn__sig"><code><span class="ty">Period</span>::release(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Period-step" data-name="period::step">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Period</span>::step(self : <span class="ty">Period</span>,&#8203; state : <span class="ty">Usage</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Counted</span></code></div>
+  <div class="fn__doc"><p>Count one event at <code>now</code> against <code>state</code>, leaving the period untouched.</p>
+<p>This is the whole of the arithmetic, and the seam for a quota shared by several processes: read the state out of the store — <a class="ref" href="#Period::opening"><code>Period::opening</code></a> when the key is missing — count here, and write <code>state</code> back only if the stored value has not changed in between; on a clash, read again and count again. The compare-and-set is what stops two writers from both spending the last event of a quota, as with <a class="ref" href="#Bucket::step"><code>Bucket::step</code></a>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>state</code></td><td class="ptype"><code>Usage</code></td><td class="pdef">—</td><td class="pdoc">the period's state as the store has it</td></tr><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc">the caller's clock reading, in nanoseconds</td></tr></tbody></table>
 </article>
 
 <article class="fn" id="Period-take" data-name="period::take">
@@ -401,6 +458,12 @@ drop ×= (size - working) / size</pre>
 <p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
 <div class="fns">
 
+<article class="fn" id="Gate-acquire" data-name="gate::acquire">
+  <div class="fn__sig"><code><span class="ty">Gate</span>::acquire(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
 <article class="fn" id="Gate-enter" data-name="gate::enter">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gate</span>::enter(self : <span class="ty">Gate</span>) -&gt; <span class="ty">Bool</span></code></div>
   <div class="fn__doc"><p>Whether there is room, taking it if there is.</p></div>
@@ -423,6 +486,12 @@ drop ×= (size - working) / size</pre>
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Gate</span>::new(limit : <span class="ty">Int32</span>) -&gt; <span class="ty">Gate</span></code></div>
   <div class="fn__doc"><p>A gate that nothing has entered.</p></div>
   <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>limit</code></td><td class="ptype"><code>Int32</code></td><td class="pdef">—</td><td class="pdoc">how many calls may be inside at once; zero or less means no ceiling</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Gate-release" data-name="gate::release">
+  <div class="fn__sig"><code><span class="ty">Gate</span>::release(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
 </article>
 </div>
 </article>
@@ -662,6 +731,44 @@ drop ×= (size - working) / size</pre>
 </article>
 </div>
 </article>
+<article class="api" id="Chained" data-name="chained">
+<header class="api__head">
+  <h3 class="api__name">Chained</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>Several limiters a call has to get past, in order: a per-second rate and a daily quota, a quota and a concurrency gate. Any refusal refuses the call, and the permits already taken from the limiters before it are given back, so a call that does not run spends nothing.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Chained-acquire" data-name="chained::acquire">
+  <div class="fn__sig"><code><span class="ty">Chained</span>::acquire(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Chained-new" data-name="chained::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Chained</span>::new(links : <span class="ty">Array</span>[&amp;<span class="ty">Permit</span>]) -&gt; <span class="ty">Chained</span></code></div>
+  <div class="fn__doc"><p>The limiters in the order a call meets them. With none, every call passes.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>links</code></td><td class="ptype"><code>Array[&amp;Permit]</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Chained-release" data-name="chained::release">
+  <div class="fn__sig"><code><span class="ty">Chained</span>::release(… ) -&gt; ?</code></div>
+  
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>…</code></td><td class="ptype"><code></code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Counted" data-name="counted">
+<header class="api__head">
+  <h3 class="api__name">Counted</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>What one event gets from a <a class="ref" href="#Period"><code>Period</code></a>: where the quota stands after it, and the state to keep.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>quota</code></td><td class="ptype"><code>Quota</code></td><td class="pdoc">Under, on or past the quota once this event is counted.</td></tr><tr><td class="pname"><code>state</code></td><td class="ptype"><code>Usage</code></td><td class="pdoc">The state to keep, whatever the quota says.</td></tr></tbody></table>
+</article>
 <article class="api" id="Gradient" data-name="gradient">
 <header class="api__head">
   <h3 class="api__name">Gradient</h3>
@@ -747,9 +854,77 @@ drop ×= (size - working) / size</pre>
 <article class="fn" id="Limiter-new" data-name="limiter::new">
   <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">Limiter</span>::new(rule~ : <span class="ty">Rule</span> = <span class="ty">Vegas</span>(vegas)</code></div>
   <div class="fn__doc"><p>A limiter on one of the rules that ship.</p></div>
-  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>rule</code><i class="lab">~</i></td><td class="ptype"><code>Rule</code></td><td class="pdef"><code class="dflt">Vegas(vegas</code></td><td class="pdoc">how the limit moves; <code>Vegas(vegas)</code> by default, as in Netflix concurrency-limits</td></tr><tr><td class="pname"><code>roll</code></td><td class="ptype">—</td><td class="pdef">—</td><td class="pdoc">a draw from 0 to 1, used only by Vegas to spread its no-queue measurements so a fleet does not take them in step; a constant <code>0.5</code> by default</td></tr></tbody></table>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>rule</code><i class="lab">~</i></td><td class="ptype"><code>Rule</code></td><td class="pdef"><code class="dflt">Vegas(vegas</code></td><td class="pdoc">how the limit moves; <code>Vegas(vegas)</code> by default, as in Netflix concurrency-limits</td></tr><tr><td class="pname"><code>roll</code></td><td class="ptype">—</td><td class="pdef">—</td><td class="pdoc">a draw from 0 to 1, used by Vegas and MinRtt to spread their measurements of the fastest call so a fleet does not take them in step; a constant <code>0.5</code> by default</td></tr></tbody></table>
 </article>
 </div>
+</article>
+<article class="api" id="MinRtt" data-name="minrtt">
+<header class="api__head">
+  <h3 class="api__name">MinRtt</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>The first gradient rule: the gradient between the fastest response time seen and the latest one. Calls slower than the fastest by more than <code>tolerance</code> shrink the limit in proportion; a drop cuts it by <code>backoff</code>. Every <code>probe</code> calls or so, the limit falls to the queue size and the fastest time is measured afresh, so that a baseline taken when the service was idle does not hold forever.</p>
+<p><a class="ref" href="#Gradient"><code>Gradient</code></a> replaced it as the default: a minimum never forgets a lucky call, and the probes cost a dip in throughput. It is here for the services tuned to it. The preset is <a class="ref" href="#min_rtt"><code>min_rtt</code></a>; build another with <a class="ref" href="#MinRtt::new"><code>MinRtt::new</code></a>, or update one in place with <code>{ ..min_rtt, probe: 0 }</code>.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit before any call has finished.</td></tr><tr><td class="pname"><code>min</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes under this.</td></tr><tr><td class="pname"><code>max</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">The limit never goes over this.</td></tr><tr><td class="pname"><code>smoothing</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How far towards a lower estimate the limit moves, from 0 to 1.</td></tr><tr><td class="pname"><code>queue</code></td><td class="ptype"><code>Queue</code></td><td class="pdoc">Slots added to every estimate.</td></tr><tr><td class="pname"><code>tolerance</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">How much slower than the fastest call a call may be before the limit shrinks.</td></tr><tr><td class="pname"><code>probe</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Calls between probes, give or take a random share of as many again; 0 never probes.</td></tr><tr><td class="pname"><code>backoff</code></td><td class="ptype"><code>Double</code></td><td class="pdoc">The share of the limit kept after a drop.</td></tr></tbody></table>
+<div class="fns">
+
+<article class="fn" id="MinRtt-new" data-name="minrtt::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span> <span class="ty">MinRtt</span>::new(initial~ : <span class="ty">Int32</span> = min_rtt.initial,&#8203; min~ : <span class="ty">Int32</span> = min_rtt.min,&#8203; max~ : <span class="ty">Int32</span> = min_rtt.max,&#8203; smoothing~ : <span class="ty">Double</span> = min_rtt.smoothing,&#8203; queue~ : <span class="ty">Queue</span> = min_rtt.queue,&#8203; tolerance~ : <span class="ty">Double</span> = min_rtt.tolerance,&#8203; probe~ : <span class="ty">Int32</span> = min_rtt.probe,&#8203; backoff~ : <span class="ty">Double</span> = min_rtt.backoff) -&gt; <span class="ty">MinRtt</span></code></div>
+  <div class="fn__doc"><p>The first gradient rule by name, every knob with the preset's value.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>initial</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">min_rtt.initial</code></td><td class="pdoc">the limit before any call has finished, <code>50</code> in the preset</td></tr><tr><td class="pname"><code>min</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">min_rtt.min</code></td><td class="pdoc">the least the limit goes to, <code>1</code> in the preset</td></tr><tr><td class="pname"><code>max</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">min_rtt.max</code></td><td class="pdoc">the most the limit goes to, <code>1000</code> in the preset</td></tr><tr><td class="pname"><code>smoothing</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">min_rtt.smoothing</code></td><td class="pdoc">how far towards a lower estimate the limit moves, <code>0.2</code> in the preset</td></tr><tr><td class="pname"><code>queue</code><i class="lab">~</i></td><td class="ptype"><code>Queue</code></td><td class="pdef"><code class="dflt">min_rtt.queue</code></td><td class="pdoc">slots added to every estimate, <code>Root(4)</code> in the preset</td></tr><tr><td class="pname"><code>tolerance</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">min_rtt.tolerance</code></td><td class="pdoc">how much slower than the fastest call a call may be, <code>2.0</code> in the preset</td></tr><tr><td class="pname"><code>probe</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">min_rtt.probe</code></td><td class="pdoc">calls between probes of the fastest time, <code>1000</code> in the preset; <code>0</code> never probes</td></tr><tr><td class="pname"><code>backoff</code><i class="lab">~</i></td><td class="ptype"><code>Double</code></td><td class="pdef"><code class="dflt">min_rtt.backoff</code></td><td class="pdoc">the share of the limit kept after a drop, <code>0.9</code> in the preset</td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Partitioned" data-name="partitioned">
+<header class="api__head">
+  <h3 class="api__name">Partitioned</h3>
+  <span class="chip chip--kind">struct</span>
+  
+</header>
+<div class="api__doc"><p>A limiter per key: per client, per tenant, per route. <code>make</code> builds the limiter for a key the first time it is seen. At most <code>limit</code> keys are kept; past that the one used least recently is dropped, and comes back fresh if it is seen again.</p></div>
+<p class="api__note">Held by the caller. Its fields are private; the methods below are the way in.</p>
+<div class="fns">
+
+<article class="fn" id="Partitioned-acquire" data-name="partitioned::acquire">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">L</span> : <span class="ty">Permit</span>] <span class="ty">Partitioned</span>::acquire(self : <span class="ty">Partitioned</span>[<span class="ty">L</span>],&#8203; key : <span class="ty">String</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Bool</span></code></div>
+  <div class="fn__doc"><p>Admit one call for <code>key</code> at <code>now</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>key</code></td><td class="ptype"><code>String</code></td><td class="pdef">—</td><td class="pdoc"></td></tr><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Partitioned-get" data-name="partitioned::get">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">L</span>] <span class="ty">Partitioned</span>::get(self : <span class="ty">Partitioned</span>[<span class="ty">L</span>],&#8203; key : <span class="ty">String</span>) -&gt; <span class="ty">L</span></code></div>
+  <div class="fn__doc"><p>The limiter for <code>key</code>, made if this is the first time, and marked as used now.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>key</code></td><td class="ptype"><code>String</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Partitioned-length" data-name="partitioned::length">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">L</span>] <span class="ty">Partitioned</span>::length(self : <span class="ty">Partitioned</span>[<span class="ty">L</span>]) -&gt; <span class="ty">Int32</span></code></div>
+  <div class="fn__doc"><p>How many keys have a limiter now.</p></div>
+  
+</article>
+
+<article class="fn" id="Partitioned-new" data-name="partitioned::new">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">L</span>] <span class="ty">Partitioned</span>::new(make : (<span class="ty">String</span>) -&gt; <span class="ty">L</span>,&#8203; limit~ : <span class="ty">Int32</span> = partitions) -&gt; <span class="ty">Partitioned</span>[<span class="ty">L</span>]</code></div>
+  <div class="fn__doc"><p>No key seen yet.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>make</code></td><td class="ptype"><code>(String) -&gt; L</code></td><td class="pdef">—</td><td class="pdoc">the limiter for a key seen for the first time</td></tr><tr><td class="pname"><code>limit</code><i class="lab">~</i></td><td class="ptype"><code>Int32</code></td><td class="pdef"><code class="dflt">partitions</code></td><td class="pdoc">the most keys kept, <a class="ref" href="#partitions"><code>partitions</code></a> unless given; at least one</td></tr></tbody></table>
+</article>
+
+<article class="fn" id="Partitioned-release" data-name="partitioned::release">
+  <div class="fn__sig"><code><span class="kw">pub</span> <span class="kw">fn</span>[<span class="ty">L</span> : <span class="ty">Permit</span>] <span class="ty">Partitioned</span>::release(self : <span class="ty">Partitioned</span>[<span class="ty">L</span>],&#8203; key : <span class="ty">String</span>,&#8203; now : <span class="ty">Int64</span>) -&gt; <span class="ty">Unit</span></code></div>
+  <div class="fn__doc"><p>Take back the call last admitted for <code>key</code>.</p></div>
+  <table class="params"><thead><tr><th>parameter</th><th>type</th><th>default</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>key</code></td><td class="ptype"><code>String</code></td><td class="pdef">—</td><td class="pdoc"></td></tr><tr><td class="pname"><code>now</code></td><td class="ptype"><code>Int64</code></td><td class="pdef">—</td><td class="pdoc"></td></tr></tbody></table>
+</article>
+</div>
+</article>
+<article class="api" id="Queue" data-name="queue">
+<header class="api__head">
+  <h3 class="api__name">Queue</h3>
+  <span class="chip chip--kind">enum</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>How many slots a <a class="ref" href="#MinRtt"><code>MinRtt</code></a> rule adds on top of each estimate.</p></div>
+<ul class="variants"><li><code>Root(Int32)</code></li><li><code>Fixed(Int32)</code></li></ul>
 </article>
 <article class="api" id="Rule" data-name="rule">
 <header class="api__head">
@@ -758,7 +933,7 @@ drop ×= (size - working) / size</pre>
   <span class="api__derived">derives Debug, Eq</span>
 </header>
 <div class="api__doc"><p>The rules that ship.</p></div>
-<ul class="variants"><li><code>Fixed(Int32)</code></li><li><code>Aimd(Aimd)</code></li><li><code>Vegas(Vegas)</code></li><li><code>Gradient(Gradient)</code></li></ul>
+<ul class="variants"><li><code>Fixed(Int32)</code></li><li><code>Aimd(Aimd)</code></li><li><code>Vegas(Vegas)</code></li><li><code>Gradient(Gradient)</code></li><li><code>MinRtt(MinRtt)</code></li></ul>
 </article>
 <article class="api" id="Sample" data-name="sample">
 <header class="api__head">
@@ -768,6 +943,15 @@ drop ×= (size - working) / size</pre>
 </header>
 <div class="api__doc"><p>One finished call, as a rule sees it.</p></div>
 <table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>rtt</code></td><td class="ptype"><code>Int64</code></td><td class="pdoc">How long the call took, in nanoseconds.</td></tr><tr><td class="pname"><code>flying</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Calls in flight when this one started, itself included.</td></tr><tr><td class="pname"><code>dropped</code></td><td class="ptype"><code>Bool</code></td><td class="pdoc">Whether the call timed out or was refused further down, which every rule reads as load to back off from.</td></tr></tbody></table>
+</article>
+<article class="api" id="Usage" data-name="usage">
+<header class="api__head">
+  <h3 class="api__name">Usage</h3>
+  <span class="chip chip--kind">struct</span>
+  <span class="api__derived">derives Debug, Eq</span>
+</header>
+<div class="api__doc"><p>Where a <a class="ref" href="#Period"><code>Period</code></a> stands: when the open period started, if one is open, and how many events it has counted. This is the whole of a period's state, and what a store shared by several processes holds.</p></div>
+<table class="params"><thead><tr><th>field</th><th>type</th><th>what it is</th></tr></thead><tbody><tr><td class="pname"><code>start</code></td><td class="ptype"><code>Int64?</code></td><td class="pdoc">When the open period started on the caller's clock, <code>None</code> before the first event and after a period has closed.</td></tr><tr><td class="pname"><code>used</code></td><td class="ptype"><code>Int32</code></td><td class="pdoc">Events counted in the open period.</td></tr></tbody></table>
 </article>
 <article class="api" id="Vegas" data-name="vegas">
 <header class="api__head">

@@ -161,6 +161,7 @@ println("15 bad    ratio \{percent(breaker.ratio(at))}")</pre>
           <div class="formula__row"><span>ratio</span><span>= drop · ( size − working ) / size</span></div>
         </div>
         <p><code>failing</code> and <code>working</code> count buckets, not calls: the run of all-failure buckets at the head of the window and the run of all-success ones. A bucket that saw both ends both runs.</p>
+        <p><code>call</code> puts a call through all of this in one line: a refusal raises <code>Unavailable</code> or answers with <code>fallback</code>, and an error the call raises counts as a failure unless <code>acceptable</code> says it is the caller's own, a not found or a bad request. The clock is passed as a function, since it is read again when the call returns.</p>
       </div>
     </section>
 
@@ -211,6 +212,7 @@ left      0 of 2</pre>
       <div class="step__body">
         <p><code>Hit</code> is the call that lands exactly on the quota. It is admitted, but it is told apart from <code>Under</code> because it is the last one — the moment to warn rather than wait for the next refusal.</p>
         <p>The difference between the two shows up under bursty traffic: a period can spend one quota at the end of a period and another at the start of the next, so forty calls can pass in a second that allows twenty. <a href="https://github.com/moonbitstack/moonward/blob/master/src/examples/limiters/main.mbt">The limiters example</a> runs exactly that and prints the three answers side by side.</p>
+        <p>A period's whole state is when the open period started and how many it has counted, so it is shared the way a bucket is (step 10): <code>opening</code> is a key the store does not have yet, and <code>step</code> counts one event against the state the store holds.</p>
       </div>
     </section>
 
@@ -259,6 +261,8 @@ after 3 timeouts, limit 21</pre>
       </div>
       <div class="step__body">
         <p>Settle every lease once: <code>pass</code> when the call came back, <code>fail</code> on a timeout or an overload reply, <code>ignore</code> when the answer says nothing about load. A rule of your own implements <code>Adapt</code> and goes in through <code>Limiter::custom</code>.</p>
+        <p>Besides AIMD, Vegas and the second gradient rule, <code>MinRtt</code> is the first one: the latest call against the fastest since the last probe, and every <code>probe</code> calls or so a drop to the queue size while the fastest time is measured again. It is there for services tuned to it; the default is still Vegas.</p>
+        <p>Limiters combine. Each can hand out one permit and take it back, the <code>Permit</code> trait: <code>Chained</code> asks several in a row and gives back what the earlier ones gave when a later one refuses, and <code>Partitioned</code> keeps one limiter per key, dropping the key used least recently once it holds <code>limit</code> of them.</p>
       </div>
     </section>
 
@@ -380,6 +384,7 @@ changed     true, so the second asks again: 2 left</pre>
       <div class="step__body">
         <p>Both calls read four tokens and both were told yes, but only one of them may act on it. The first writes back under the version it read; the second's write no longer matches, so its answer is stale and the call is asked again, this time against three tokens. What makes the pair safe is a store that swaps the value only when the version still matches — a compare-and-set, a transaction, or the script a Redis client runs — and a store that rounds the count to a whole number throws away the fraction a slow rate lives on.</p>
         <p><code>opening</code> is the state a key that is not there starts in: a full bucket at the clock reading you give it, which is the state <code>new</code> starts from too.</p>
+        <p>A quota per period is shared the same way: its state is <code>Usage</code>, when the open period started and how many it has counted, and <code>Period::step</code> counts one event against it.</p>
       </div>
     </section>
 
