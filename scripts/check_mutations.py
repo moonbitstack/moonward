@@ -47,8 +47,8 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
     ),
     (
         "limit.mbt",
-        "        now - (now % self.period + self.period) % self.period",
-        "        now",
+        "None if self.align => now - (now % self.period + self.period) % self.period",
+        "None if self.align => now",
         "an aligned period opens where the first event lands",
     ),
     (
@@ -75,6 +75,30 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
         "  let first = (self.head + span) % size",
         "a reading starts at the bucket that is still filling",
     ),
+    (
+        "limit.mbt",
+        "    Some(start) if now - start >= self.period => { start: None, used: 0 }",
+        "    Some(start) if now - start > self.period => { start: None, used: 0 }",
+        "a fixed period closes a nanosecond late",
+    ),
+    (
+        "adapt.mbt",
+        "    next = jmax(r.min.to_double(), est * (1.0 - r.smoothing) + r.smoothing * next)",
+        "    next = jmax(r.min.to_double(), est * r.smoothing + (1.0 - r.smoothing) * next)",
+        "the first gradient rule smooths the wrong way round",
+    ),
+    (
+        "compose.mbt",
+        "        self.links[j].release(now)\n      }\n      return false",
+        "        ignore(self.links[j])\n      }\n      return false",
+        "a chain keeps what it took from the limiters before a refusal",
+    ),
+    (
+        "compose.mbt",
+        "      self.entries.remove(key)\n      self.entries[key] = limiter",
+        "      self.entries[key] = limiter",
+        "a partition is dropped by first use rather than last use",
+    ),
 ]
 
 
@@ -90,9 +114,10 @@ def run() -> tuple[int, list[str]]:
     text = out.stdout + out.stderr
     failed = sorted({line.split('("')[1].split('")')[0] for line in text.splitlines() if '") failed' in line})
     total = [line for line in text.splitlines() if line.startswith("Total tests:")]
-    count = 0
-    if total:
-        count = int(total[-1].split("failed:")[1].split(".")[0].strip())
+    if not total:
+        # A mutation that does not build says nothing about the tests.
+        return -1, ["the mutated sources did not build"]
+    count = int(total[-1].split("failed:")[1].split(".")[0].strip())
     return count, failed
 
 
@@ -121,7 +146,10 @@ def main() -> int:
     print("|:--|:--|:--|")
     for name, what, count, failed in rows:
         print(f"| `{name}` | {what} | {count}: {', '.join(f'`{f}`' for f in failed) or '**none**'} |")
-    return 0
+    unseen = [what for _, what, count, _ in rows if count <= 0]
+    for what in unseen:
+        print(f"no test noticed: {what}")
+    return 1 if unseen else 0
 
 
 if __name__ == "__main__":

@@ -221,3 +221,59 @@ pub fn Promise::pass(self : Promise, now : Int64) -> Unit {
 pub fn Promise::fail(self : Promise, now : Int64) -> Unit {
   self.breaker.win.slot(now).add(Failure)
 }
+
+///|
+/// A call the breaker would not let through.
+pub(all) suberror Unavailable
+
+///|
+pub impl Show for Unavailable with fn output(_self, logger) {
+  logger.write_string("the breaker refused the call")
+}
+
+///|
+pub extend Unavailable with Show::{output, to_string}
+
+///|
+/// `f` through the breaker, which is go-zero's `Do` and its siblings in one call.
+///
+/// A refusal raises [`Unavailable`], or answers with `fallback` when one is given.
+/// An error from `f` is raised as it came, and counts against the breaker unless
+/// `acceptable` says it is the caller's business rather than the service's: a not
+/// found, a validation error.
+///
+/// # Parameters
+/// - `now` : the caller's clock, in nanoseconds; read before the call and again after it
+/// - `roll` : a draw from `[0, 1)`
+/// - `f` : the call
+/// - `acceptable` : which errors count as a success; none unless given
+/// - `fallback` : the answer when the breaker refuses; [`Unavailable`] is raised unless given
+pub fn[T] Breaker::call(
+  self : Breaker,
+  now : () -> Int64,
+  roll : Double,
+  f : () -> T raise,
+  acceptable? : (Error) -> Bool,
+  fallback? : (Error) -> T raise,
+) -> T raise {
+  guard self.allow(now(), roll) is Some(promise) else {
+    match fallback {
+      Some(answer) => return answer(Unavailable)
+      None => raise Unavailable
+    }
+  }
+  let outcome : Result[T, Error] = Ok(f()) catch { e => Err(e) }
+  match outcome {
+    Ok(value) => {
+      promise.pass(now())
+      value
+    }
+    Err(e) => {
+      match acceptable {
+        Some(ok) if ok(e) => promise.pass(now())
+        _ => promise.fail(now())
+      }
+      raise e
+    }
+  }
+}

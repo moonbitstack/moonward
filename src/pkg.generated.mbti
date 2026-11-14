@@ -13,6 +13,10 @@ pub let backoff : Backoff
 
 pub let gradient : Gradient
 
+pub let min_rtt : MinRtt
+
+pub let partitions : Int32
+
 pub let shed : Shed
 
 pub let sre : Sre
@@ -20,6 +24,10 @@ pub let sre : Sre
 pub let vegas : Vegas
 
 // Errors
+pub(all) suberror Unavailable
+pub fn Unavailable::output(Self, &Logger) -> Unit
+pub fn Unavailable::to_string(Self) -> String
+pub impl Show for Unavailable
 
 // Types and methods
 #derive(Eq, @debug.Debug)
@@ -58,6 +66,7 @@ pub struct Breaker {
   mut last : Int64?
 }
 pub fn Breaker::allow(Self, Int64, Double) -> Promise?
+pub fn[T] Breaker::call(Self, () -> Int64, Double, () -> T raise, acceptable? : (Error) -> Bool, fallback? : (Error) -> T raise) -> T raise
 pub fn Breaker::new(sre? : Sre, now? : Int64) -> Self
 pub fn Breaker::ratio(Self, Int64) -> Double
 
@@ -66,12 +75,32 @@ pub struct Bucket {
   burst : Double
   mut state : Tokens
 }
+pub fn Bucket::acquire(Self, Int64) -> Bool
 pub fn Bucket::new(Double, burst? : Double, now? : Int64) -> Self
 pub fn Bucket::next(Self, Int64, n? : Double) -> @moondate.Span
 pub fn Bucket::opening(Self, Int64) -> Tokens
+pub fn Bucket::release(Self, Int64) -> Unit
 pub fn Bucket::step(Self, Tokens, Int64, n? : Double) -> Grant
 pub fn Bucket::take(Self, Int64, n? : Double) -> Bool
 pub fn Bucket::tokens(Self, Int64) -> Double
+pub impl Permit for Bucket
+
+pub struct Chained {
+  links : Array[&Permit]
+}
+pub fn Chained::acquire(Self, Int64) -> Bool
+pub fn Chained::new(Array[&Permit]) -> Self
+pub fn Chained::release(Self, Int64) -> Unit
+pub impl Permit for Chained
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Counted {
+  quota : Quota
+  state : Usage
+}
+pub fn Counted::equal(Self, Self) -> Bool
+pub fn Counted::not_equal(Self, Self) -> Bool
+pub fn Counted::to_repr(Self) -> @debug.Repr
 
 pub struct Deadline {
   start : Int64
@@ -85,10 +114,13 @@ pub struct Gate {
   limit : Int32
   mut held : Int32
 }
+pub fn Gate::acquire(Self, Int64) -> Bool
 pub fn Gate::enter(Self) -> Bool
 pub fn Gate::held(Self) -> Int32
 pub fn Gate::leave(Self) -> Unit
 pub fn Gate::new(Int32) -> Self
+pub fn Gate::release(Self, Int64) -> Unit
+pub impl Permit for Gate
 
 #derive(Eq, @debug.Debug)
 pub(all) struct Gradient {
@@ -147,6 +179,22 @@ pub fn Limiter::limit(Self) -> Int32
 pub fn Limiter::new(rule? : Rule, roll? : () -> Double) -> Self
 
 #derive(Eq, @debug.Debug)
+pub(all) struct MinRtt {
+  initial : Int32
+  min : Int32
+  max : Int32
+  smoothing : Double
+  queue : Queue
+  tolerance : Double
+  probe : Int32
+  backoff : Double
+}
+pub fn MinRtt::equal(Self, Self) -> Bool
+pub fn MinRtt::new(initial? : Int32, min? : Int32, max? : Int32, smoothing? : Double, queue? : Queue, tolerance? : Double, probe? : Int32, backoff? : Double) -> Self
+pub fn MinRtt::not_equal(Self, Self) -> Bool
+pub fn MinRtt::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
 pub(all) enum Outcome {
   Success
   Failure
@@ -156,23 +204,47 @@ pub fn Outcome::equal(Self, Self) -> Bool
 pub fn Outcome::not_equal(Self, Self) -> Bool
 pub fn Outcome::to_repr(Self) -> @debug.Repr
 
+pub struct Partitioned[L] {
+  make : (String) -> L
+  limit : Int32
+  entries : Map[String, L]
+}
+pub fn[L : Permit] Partitioned::acquire(Self[L], String, Int64) -> Bool
+pub fn[L] Partitioned::get(Self[L], String) -> L
+pub fn[L] Partitioned::length(Self[L]) -> Int32
+pub fn[L] Partitioned::new((String) -> L, limit? : Int32) -> Self[L]
+pub fn[L : Permit] Partitioned::release(Self[L], String, Int64) -> Unit
+
 pub struct Period {
   quota : Int32
   period : Int64
   align : Bool
-  mut start : Int64?
-  mut count : Int32
+  mut state : Usage
 }
+pub fn Period::acquire(Self, Int64) -> Bool
 pub fn Period::left(Self, Int64) -> Int32
 pub fn Period::new(Int32, @moondate.Span, align? : Bool) -> Self
 pub fn Period::next(Self, Int64) -> @moondate.Span
+pub fn Period::opening(Self) -> Usage
+pub fn Period::release(Self, Int64) -> Unit
+pub fn Period::step(Self, Usage, Int64) -> Counted
 pub fn Period::take(Self, Int64) -> Quota
+pub impl Permit for Period
 
 pub struct Promise {
   breaker : Breaker
 }
 pub fn Promise::fail(Self, Int64) -> Unit
 pub fn Promise::pass(Self, Int64) -> Unit
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Queue {
+  Root(Int32)
+  Fixed(Int32)
+}
+pub fn Queue::equal(Self, Self) -> Bool
+pub fn Queue::not_equal(Self, Self) -> Bool
+pub fn Queue::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
 pub(all) enum Quota {
@@ -190,6 +262,7 @@ pub(all) enum Rule {
   Aimd(Aimd)
   Vegas(Vegas)
   Gradient(Gradient)
+  MinRtt(MinRtt)
 }
 pub fn Rule::equal(Self, Self) -> Bool
 pub fn Rule::not_equal(Self, Self) -> Bool
@@ -238,10 +311,13 @@ pub struct Sliding {
   window : @moondate.Span
   stamps : Array[Int64]
 }
+pub fn Sliding::acquire(Self, Int64) -> Bool
 pub fn Sliding::left(Self, Int64) -> Int32
 pub fn Sliding::new(Int32, @moondate.Span) -> Self
 pub fn Sliding::next(Self, Int64) -> @moondate.Span
+pub fn Sliding::release(Self, Int64) -> Unit
 pub fn Sliding::take(Self, Int64) -> Bool
+pub impl Permit for Sliding
 
 #derive(Eq, @debug.Debug)
 pub(all) struct Sre {
@@ -298,6 +374,15 @@ pub fn Total::not_equal(Self, Self) -> Bool
 pub fn Total::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
+pub(all) struct Usage {
+  start : Int64?
+  used : Int32
+}
+pub fn Usage::equal(Self, Self) -> Bool
+pub fn Usage::not_equal(Self, Self) -> Bool
+pub fn Usage::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
 pub(all) struct Vegas {
   initial : Int32
   max : Int32
@@ -331,4 +416,9 @@ pub fn[B] Window::width(Self[B]) -> @moondate.Span
 pub(open) trait Adapt {
   fn limit(Self) -> Int32
   fn sample(Self, Sample) -> Unit
+}
+
+pub(open) trait Permit {
+  fn acquire(Self, Int64) -> Bool
+  fn release(Self, Int64) -> Unit
 }

@@ -76,3 +76,24 @@ jobs:
       - name: interfaces are up to date
         run: |
           moon info --target all && git diff --exit-code
+
+      # Every decision broken once has to turn a test red; the script exits 1 when one does not.
+      - name: every decision is caught by a test when broken
+        if: runner.os == 'Linux'
+        run: python3 scripts/check_mutations.py
+
+      # The first gradient rule's vectors are Netflix concurrency-limits' own answers; a stale
+      # file means the replay compares against something the reference no longer says.
+      - name: the first gradient rule's vectors are the reference's current output
+        if: runner.os == 'Linux'
+        run: |
+          cd scripts/gen_vectors/min_rtt
+          base=https://repo1.maven.org/maven2
+          curl -fsSL -o core.jar "$base/com/netflix/concurrency-limits/concurrency-limits-core/0.5.4/concurrency-limits-core-0.5.4.jar"
+          curl -fsSL -o slf4j-api.jar "$base/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar"
+          javac -d "$RUNNER_TEMP/classes" -cp core.jar:slf4j-api.jar MinRttVectors.java
+          java -cp "$RUNNER_TEMP/classes:core.jar:slf4j-api.jar" MinRttVectors 2>/dev/null > ../../../src/min_rtt_vectors_wbtest.mbt
+          rm core.jar slf4j-api.jar
+          cd ../../..
+          moon fmt
+          git diff --exit-code src/min_rtt_vectors_wbtest.mbt

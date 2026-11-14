@@ -278,6 +278,42 @@ pub extend Quota with Debug::{to_repr}
 pub extend Quota with Eq::{not_equal, equal}
 
 ///|
+/// Where a [`Period`] stands: when the open period started, if one is open, and how
+/// many events it has counted. This is the whole of a period's state, and what a
+/// store shared by several processes holds.
+#derive(Eq, Debug)
+pub(all) struct Usage {
+  /// When the open period started on the caller's clock, `None` before the first
+  /// event and after a period has closed.
+  start : Int64?
+  /// Events counted in the open period.
+  used : Int32
+}
+
+///|
+pub extend Usage with Debug::{to_repr}
+
+///|
+pub extend Usage with Eq::{not_equal, equal}
+
+///|
+/// What one event gets from a [`Period`]: where the quota stands after it, and the
+/// state to keep.
+#derive(Eq, Debug)
+pub(all) struct Counted {
+  /// Under, on or past the quota once this event is counted.
+  quota : Quota
+  /// The state to keep, whatever the quota says.
+  state : Usage
+}
+
+///|
+pub extend Counted with Debug::{to_repr}
+
+///|
+pub extend Counted with Eq::{not_equal, equal}
+
+///|
 /// A fixed window counter: at most `quota` events per `period`, the count starting
 /// again when a period ends.
 ///
@@ -289,12 +325,14 @@ pub extend Quota with Eq::{not_equal, equal}
 /// A period opens on the first event after the last one closed. With `align` it
 /// opens on a multiple of `period` on the caller's clock instead, so with a Unix
 /// clock a daily quota resets at midnight UTC rather than a day after first use.
+///
+/// Several processes share one quota by keeping its [`Usage`] in a store and
+/// counting with [`Period::step`], as a [`Bucket`] shares its tokens.
 pub struct Period {
   quota : Int32
   period : Int64
   align : Bool
-  mut start : Int64?
-  mut count : Int32
+  mut state : Usage
 }
 
 ///|
@@ -318,9 +356,59 @@ pub fn Period::new(
       period.nanos
     },
     align,
-    start: None,
-    count: 0,
+    state: { start: None, used: 0, },
   }
+}
+
+///|
+/// The state of a period no event has touched: what a store with no entry for the
+/// key stands for.
+pub fn Period::opening(self : Period) -> Usage {
+  ignore(self)
+  { start: None, used: 0, }
+}
+
+///|
+/// `state` with the period closed if `now` is past it. Only an event opens the
+/// next one, so asking how much is left does not move where a period starts. A
+/// clock that moves backwards stays in the open period rather than earning a fresh
+/// quota.
+fn Period::rolled(self : Period, state : Usage, now : Int64) -> Usage {
+  match state.start {
+    Some(start) if now - start >= self.period => { start: None, used: 0, }
+    _ => state
+  }
+}
+
+///|
+/// Count one event at `now` against `state`, leaving the period untouched.
+///
+/// This is the whole of the arithmetic, and the seam for a quota shared by several
+/// processes: read the state out of the store — [`Period::opening`] when the key is
+/// missing — count here, and write `state` back only if the stored value has not
+/// changed in between; on a clash, read again and count again. The compare-and-set
+/// is what stops two writers from both spending the last event of a quota, as with
+/// [`Bucket::step`].
+///
+/// # Parameters
+/// - `state` : the period's state as the store has it
+/// - `now` : the caller's clock reading, in nanoseconds
+pub fn Period::step(self : Period, state : Usage, now : Int64) -> Counted {
+  let state = self.rolled(state, now)
+  let start = match state.start {
+    Some(start) => start
+    None if self.align => now - (now % self.period + self.period) % self.period
+    None => now
+  }
+  let used = state.used + 1
+  let quota = if used < self.quota {
+    Under
+  } else if used == self.quota {
+    Hit
+  } else {
+    Over
+  }
+  { quota, state: { start: Some(start), used, }, }
 }
 
 ///|
@@ -329,24 +417,9 @@ pub fn Period::new(
 /// # Parameters
 /// - `now` : the caller's clock reading, in nanoseconds
 pub fn Period::take(self : Period, now : Int64) -> Quota {
-  self.roll(now)
-  if self.start is None {
-    self.start = Some(
-      if self.align {
-        now - (now % self.period + self.period) % self.period
-      } else {
-        now
-      },
-    )
-  }
-  self.count += 1
-  if self.count < self.quota {
-    Under
-  } else if self.count == self.quota {
-    Hit
-  } else {
-    Over
-  }
+  let counted = self.step(self.state, now)
+  self.state = counted.state
+  counted.quota
 }
 
 ///|
@@ -355,11 +428,11 @@ pub fn Period::take(self : Period, now : Int64) -> Quota {
 /// # Parameters
 /// - `now` : the caller's clock reading, in nanoseconds
 pub fn Period::left(self : Period, now : Int64) -> Int32 {
-  self.roll(now)
-  if self.count >= self.quota {
+  self.state = self.rolled(self.state, now)
+  if self.state.used >= self.quota {
     0
   } else {
-    self.quota - self.count
+    self.quota - self.state.used
   }
 }
 
@@ -370,21 +443,10 @@ pub fn Period::left(self : Period, now : Int64) -> Int32 {
 /// # Parameters
 /// - `now` : the caller's clock reading, in nanoseconds
 pub fn Period::next(self : Period, now : Int64) -> @moondate.Span {
-  self.roll(now)
-  match self.start {
+  self.state = self.rolled(self.state, now)
+  match self.state.start {
     Some(start) => { nanos: start + self.period - now, }
     None => @moondate.Span::new()
-  }
-}
-
-///|
-/// Close the period if `now` is past it. Only an event opens the next one, so
-/// asking how much is left does not move where a period starts. A clock that
-/// moves backwards stays in the open period rather than earning a fresh quota.
-fn Period::roll(self : Period, now : Int64) -> Unit {
-  if self.start is Some(start) && now - start >= self.period {
-    self.start = None
-    self.count = 0
   }
 }
 

@@ -236,6 +236,101 @@ pub fn Gradient::new(
 }
 
 ///|
+/// How many slots a [`MinRtt`] rule adds on top of each estimate.
+#derive(Eq, Debug)
+pub(all) enum Queue {
+  /// The square root of the current limit, never less than this.
+  Root(Int32)
+  /// Always this many.
+  Fixed(Int32)
+}
+
+///|
+pub extend Queue with Debug::{to_repr}
+
+///|
+pub extend Queue with Eq::{not_equal, equal}
+
+///|
+/// The first gradient rule: the gradient between the fastest response time seen and
+/// the latest one. Calls slower than the fastest by more than `tolerance` shrink the
+/// limit in proportion; a drop cuts it by `backoff`. Every `probe` calls or so, the
+/// limit falls to the queue size and the fastest time is measured afresh, so that a
+/// baseline taken when the service was idle does not hold forever.
+///
+/// [`Gradient`] replaced it as the default: a minimum never forgets a lucky call,
+/// and the probes cost a dip in throughput. It is here for the services tuned to it.
+/// The preset is [`min_rtt`]; build another with [`MinRtt::new`], or update one in
+/// place with `{ ..min_rtt, probe: 0 }`.
+#derive(Eq, Debug)
+pub(all) struct MinRtt {
+  /// The limit before any call has finished.
+  initial : Int32
+  /// The limit never goes under this.
+  min : Int32
+  /// The limit never goes over this.
+  max : Int32
+  /// How far towards a lower estimate the limit moves, from 0 to 1.
+  smoothing : Double
+  /// Slots added to every estimate.
+  queue : Queue
+  /// How much slower than the fastest call a call may be before the limit shrinks.
+  tolerance : Double
+  /// Calls between probes, give or take a random share of as many again; 0 never
+  /// probes.
+  probe : Int32
+  /// The share of the limit kept after a drop.
+  backoff : Double
+}
+
+///|
+pub extend MinRtt with Debug::{to_repr}
+
+///|
+pub extend MinRtt with Eq::{not_equal, equal}
+
+///|
+/// The preset, the same numbers as Netflix concurrency-limits' first gradient rule
+/// (`GradientLimit`): start at 50, stay within 1 and 1000, move a fifth of the way
+/// down, the square root of the limit (at least 4) on top, a tolerance of 2, a
+/// probe every 1000 to 2000 calls, and nine tenths kept after a drop.
+pub let min_rtt : MinRtt = {
+  initial: 50,
+  min: 1,
+  max: 1000,
+  smoothing: 0.2,
+  queue: Root(4),
+  tolerance: 2.0,
+  probe: 1000,
+  backoff: 0.9,
+}
+
+///|
+/// The first gradient rule by name, every knob with the preset's value.
+///
+/// # Parameters
+/// - `initial` : the limit before any call has finished, `50` in the preset
+/// - `min` : the least the limit goes to, `1` in the preset
+/// - `max` : the most the limit goes to, `1000` in the preset
+/// - `smoothing` : how far towards a lower estimate the limit moves, `0.2` in the preset
+/// - `queue` : slots added to every estimate, `Root(4)` in the preset
+/// - `tolerance` : how much slower than the fastest call a call may be, `2.0` in the preset
+/// - `probe` : calls between probes of the fastest time, `1000` in the preset; `0` never probes
+/// - `backoff` : the share of the limit kept after a drop, `0.9` in the preset
+pub fn MinRtt::new(
+  initial~ : Int32 = min_rtt.initial,
+  min~ : Int32 = min_rtt.min,
+  max~ : Int32 = min_rtt.max,
+  smoothing~ : Double = min_rtt.smoothing,
+  queue~ : Queue = min_rtt.queue,
+  tolerance~ : Double = min_rtt.tolerance,
+  probe~ : Int32 = min_rtt.probe,
+  backoff~ : Double = min_rtt.backoff,
+) -> MinRtt {
+  { initial, min, max, smoothing, queue, tolerance, probe, backoff, }
+}
+
+///|
 /// The rules that ship.
 #derive(Eq, Debug)
 pub(all) enum Rule {
@@ -244,6 +339,7 @@ pub(all) enum Rule {
   Aimd(Aimd)
   Vegas(Vegas)
   Gradient(Gradient)
+  MinRtt(MinRtt)
 }
 
 ///|
@@ -411,6 +507,101 @@ impl Adapt for GradientLimit with fn sample(self, s) {
 }
 
 ///|
+priv struct MinRttLimit {
+  rule : MinRtt
+  roll : () -> Double
+  mut estimate : Double
+  // The fastest response time since the last probe, 0 before any.
+  mut fastest : Double
+  mut countdown : Int32
+}
+
+///|
+/// Java's `Math.min` and `Math.max`, which a NaN on either side carries through, so
+/// that a zero response time gives the same limit here as in the reference.
+fn jmin(a : Double, b : Double) -> Double {
+  if a != a || b != b {
+    0.0 / 0.0
+  } else if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn jmax(a : Double, b : Double) -> Double {
+  if a != a || b != b {
+    0.0 / 0.0
+  } else if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn MinRttLimit::queue(self : MinRttLimit) -> Double {
+  let limit = self.estimate.to_int()
+  match self.rule.queue {
+    Fixed(n) => n.to_double()
+    Root(least) => {
+      let root = limit.to_double().sqrt().to_int()
+      let root = if limit < 1000 && root < 1 { 1 } else { root }
+      (if root > least { root } else { least }).to_double()
+    }
+  }
+}
+
+///|
+/// Calls until the next probe: `probe` and a random share of as many again.
+fn MinRttLimit::next_probe(self : MinRttLimit) -> Int32 {
+  let probe = self.rule.probe
+  probe + ((self.roll)() * probe.to_double()).to_int()
+}
+
+///|
+impl Adapt for MinRttLimit with fn limit(self) {
+  self.estimate.to_int()
+}
+
+///|
+impl Adapt for MinRttLimit with fn sample(self, s) {
+  let r = self.rule
+  let queue = self.queue()
+  if r.probe > 0 {
+    let due = self.countdown <= 0
+    self.countdown -= 1
+    if due {
+      self.countdown = self.next_probe()
+      self.estimate = jmax(r.min.to_double(), queue)
+      self.fastest = 0.0
+      return
+    }
+  }
+  let rtt = s.rtt.to_double()
+  if self.fastest == 0.0 || rtt < self.fastest {
+    self.fastest = rtt
+  }
+  let gradient = jmax(0.5, jmin(1.0, r.tolerance * self.fastest / rtt))
+  let est = self.estimate
+  let mut next = if s.dropped {
+    est * r.backoff
+  } else if s.flying.to_double() < est / 2.0 {
+    return
+  } else {
+    est * gradient + queue
+  }
+  if next < est {
+    next = jmax(
+      r.min.to_double(),
+      est * (1.0 - r.smoothing) + r.smoothing * next,
+    )
+  }
+  self.estimate = jmax(queue, jmin(r.max.to_double(), next))
+}
+
+///|
 /// A concurrency limit that adapts to the response times of the calls it lets
 /// through.
 ///
@@ -427,7 +618,7 @@ pub struct Limiter {
 ///
 /// # Parameters
 /// - `rule` : how the limit moves; `Vegas(vegas)` by default, as in Netflix concurrency-limits
-/// - `roll` : a draw from 0 to 1, used only by Vegas to spread its no-queue measurements so a fleet does not take them in step; a constant `0.5` by default
+/// - `roll` : a draw from 0 to 1, used by Vegas and MinRtt to spread their measurements of the fastest call so a fleet does not take them in step; a constant `0.5` by default
 pub fn Limiter::new(
   rule~ : Rule = Vegas(vegas),
   roll~ : () -> Double = () => 0.5,
@@ -454,6 +645,17 @@ pub fn Limiter::new(
           sum: 0.0,
           count: 0,
         } : &Adapt)
+    MinRtt(r) => {
+      let limit = MinRttLimit::{
+        rule: r,
+        roll,
+        estimate: r.initial.to_double(),
+        fastest: 0.0,
+        countdown: 0,
+      }
+      limit.countdown = if r.probe > 0 { limit.next_probe() } else { 0 }
+      (limit : &Adapt)
+    }
   }
   { adapt, flying: 0, }
 }
