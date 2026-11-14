@@ -77,14 +77,14 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
     ),
     (
         "limit.mbt",
-        "    Some(start) if now - start >= self.period => { start: None, used: 0 }",
-        "    Some(start) if now - start > self.period => { start: None, used: 0 }",
+        "    Some(start) if now - start >= self.period => { start: None, used: 0, }",
+        "    Some(start) if now - start > self.period => { start: None, used: 0, }",
         "a fixed period closes a nanosecond late",
     ),
     (
         "adapt.mbt",
-        "    next = jmax(r.min.to_double(), est * (1.0 - r.smoothing) + r.smoothing * next)",
-        "    next = jmax(r.min.to_double(), est * r.smoothing + (1.0 - r.smoothing) * next)",
+        "      est * (1.0 - r.smoothing) + r.smoothing * next,\n    )",
+        "      est * r.smoothing + (1.0 - r.smoothing) * next,\n    )",
         "the first gradient rule smooths the wrong way round",
     ),
     (
