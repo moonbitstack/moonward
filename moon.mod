@@ -1,6 +1,6 @@
 name = "moonbitstack/moonward"
 
-version = "0.3.0"
+version = "0.3.1"
 
 readme = "README.md"
 
@@ -30,5 +30,5 @@ description = "Resilience for MoonBit without I/O: circuit breaking, load sheddi
 source = "src"
 
 import {
-  "moonbitstack/moondate@0.1.7",
+  "moonbitstack/moondate@0.2.1",
 }
